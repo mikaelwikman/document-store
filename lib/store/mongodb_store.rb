@@ -20,6 +20,10 @@ class Store
       entry
     end
 
+    def all
+      @co.find.map{|i| i}
+    end
+
     def update_by_url data
       @co.update({url: data['url']}, data)
     end

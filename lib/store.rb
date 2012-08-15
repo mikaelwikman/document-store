@@ -23,4 +23,8 @@ class Store
   def load_by_url url
     backend.load_by_url(url)
   end
+
+  def query query
+    backend.all
+  end
 end
