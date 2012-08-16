@@ -10,17 +10,16 @@ class Store
       entry.keys.each do |k|
         entry[k.to_s] = entry.delete(k)
       end
-      @collections[table] ||= {}
-      @collections[table][@id] = entry
+      collection(table)[@id] = entry
       @id
     end
 
     def all table
-      @collections[table].values
+      collection(table).values
     end
 
     def each table, &block
-      @collections[table].values.each &block
+      collection(table).values.each &block
     end
 
     def reset table
@@ -28,7 +27,7 @@ class Store
     end
 
     def find table, filters
-      values = @collections[table].values
+      values = collection(table).values
 
       filters.each do |filter|
         values = filter.filter(values)
@@ -41,8 +40,7 @@ class Store
       old_entry=nil
 
       if id.kind_of?(Hash)
-        @collections[table] ||= {}
-        @collections[table].each do |orig_k,orig_v|
+        collection(table).each do |orig_k,orig_v|
           if id.all?{|k,v| orig_v[k.to_s] == v}
             old_entry = orig_v
             id = orig_k
@@ -50,7 +48,7 @@ class Store
           end
         end
       else
-        old_entry = @collections[table][id]
+        old_entry = collection(table)[id]
       end
 
       if not old_entry
@@ -64,13 +62,19 @@ class Store
 
       entry = old_entry.merge(entry)
 
-      @collections[table][id] = entry
+      collection(table)[id] = entry
       nil
     end
 
     # filters
     def create_equal_filter field, value
       EqualFilter.new(field,value)
+    end
+
+    private 
+
+    def collection table
+      @collections[table] ||= {}
     end
 
     class EqualFilter
