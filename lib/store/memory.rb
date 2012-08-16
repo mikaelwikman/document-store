@@ -26,11 +26,15 @@ class Store
       @collections.delete(table)
     end
 
-    def find table, filters
+    def find table, filters, opts={}
       values = collection(table).values
 
       filters.each do |filter|
         values = filter.filter(values)
+      end
+
+      if opts[:limit]
+        values.pop while values.count > opts[:limit]
       end
 
       values

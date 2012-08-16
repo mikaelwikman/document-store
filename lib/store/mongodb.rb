@@ -39,13 +39,13 @@ class Store
       collection(table).remove({})
     end
 
-    def find table, filters
+    def find table, filters, opts={}
       real_filters = {}
       filters.inject(real_filters) do |hash,f|
         f.add_filter(hash)
       end
 
-      collection(table).find(real_filters)
+      collection(table).find(real_filters, opts)
     end
 
     # filter factories
