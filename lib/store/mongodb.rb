@@ -16,7 +16,19 @@ class Store
     end
 
     def update table, id, entry
-      collection(table).update({ _id: id }, entry)
+      filter = id.kind_of?(Hash) ? id : { _id: id }
+
+      old_entry = collection(table).find(filter).first
+
+      if old_entry
+        collection(table).update(filter, entry)
+      else
+        collection(table).insert(entry)
+      end
+    end
+
+    def all table
+      each(table).map{|i|i}
     end
 
     def each table, &block

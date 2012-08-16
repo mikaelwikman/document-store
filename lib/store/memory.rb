@@ -15,6 +15,10 @@ class Store
       @id
     end
 
+    def all table
+      @collections[table].values
+    end
+
     def each table, &block
       @collections[table].values.each &block
     end
@@ -34,14 +38,28 @@ class Store
     end
 
     def update table, id, entry
-      old_entry = @collections[table][id]
+      old_entry=nil
 
-      entry.keys.each do |key|
-        entry[key.to_s] = entry.delete(key)
+      if id.kind_of?(Hash)
+        @collections[table] ||= {}
+        @collections[table].each do |orig_k,orig_v|
+          if id.all?{|k,v| orig_v[k.to_s] == v}
+            old_entry = orig_v
+            id = orig_k
+            break;
+          end
+        end
+      else
+        old_entry = @collections[table][id]
       end
 
       if not old_entry
-        raise "The entry with id `#{id}` does not exist"
+        create table, entry
+        return
+      end
+
+      entry.keys.each do |key|
+        entry[key.to_s] = entry.delete(key)
       end
 
       entry = old_entry.merge(entry)

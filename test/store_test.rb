@@ -6,9 +6,23 @@ require 'em-synchrony'
 [Store::Mongodb, Store::Memory].each do |store|
   Class.new(TestCase).class_eval do 
 
-    context "Testing #{store.class}" do
+    context "Testing #{store.name}" do
       setup do
         @it = store.new('testDb')
+      end
+
+      should '#all aggregate all results' do
+        EM.synchrony do
+          @it.reset('test_table')
+          id = @it.create('test_table', { duck: 'monkey' })
+
+          result = @it.all('test_table')
+
+          assert_equal 1, result.count
+          assert_equal 'monkey', result[0]['duck']
+
+          EM.stop
+        end
       end
 
       should "create and retrieve entry" do
@@ -18,7 +32,7 @@ require 'em-synchrony'
 
           assert id.kind_of?(BSON::ObjectId) || id.to_i > 0
 
-          result = @it.each('test_table').map {|e| e}
+          result = @it.all('test_table')
           assert_equal 1, result.count
           assert_equal 'monkey', result.first['duck']
 
@@ -35,10 +49,45 @@ require 'em-synchrony'
 
           @it.update('test_table', id, entry)
 
-          entries = @it.each('test_table').map{|i| i}
+          entries = @it.all('test_table')
 
           assert_equal 1, entries.count
           assert_equal 'history', entries.first['duck']
+
+          EM.stop
+        end
+      end
+
+      should 'update entry by matcher' do
+        EM.synchrony do
+          @it.reset('test_table')
+          @it.create('test_table', { duck: 'monkey' })
+          @it.create('test_table', { duck: 'donkey' })
+          @it.create('test_table', { duck: 'congo' })
+
+          @it.update('test_table', 
+                     { duck: 'donkey'}, 
+                     { duck: 'history'})
+
+          entries = @it.all('test_table')
+
+          assert_equal 3, entries.count
+          assert_equal 'monkey', entries[0]['duck']
+          assert_equal 'history', entries[1]['duck']
+          assert_equal 'congo', entries[2]['duck']
+
+          EM.stop
+        end
+      end
+
+      should 'update should create if not exist' do
+        EM.synchrony do
+          @it.reset('test_table')
+          r = @it.update('test_table', {duck: 'donkey'}, { duck: 'donkey'})
+
+          entries = @it.all('test_table')
+          assert_equal 1, entries.count
+          assert_equal 'donkey', entries[0]['duck']
 
           EM.stop
         end
