@@ -48,6 +48,27 @@ class Store
       collection(table).find(real_filters, opts)
     end
 
+    def collate table, filters, opts={}
+      # need to get all items, or else we can't calculate facets
+      limit = opts.delete(:limit)
+      facets = opts.delete(:facets)
+
+      result = {
+        items: find(table, filters, opts)
+      }
+
+      if facets
+        result[:facets] = calculate_facets(facets, result[:items])
+      end
+
+      if limit
+        result[:items].pop while result[:items].count > limit
+      end
+
+      result
+    end
+
+
     # filter factories
     def create_equal_filter field, name
       EqualFilter.new(field, name)
@@ -61,6 +82,28 @@ class Store
 
     def db
       @db ||= EM::Mongo::Connection.new.db(@database_name)
+    end
+
+    def calculate_facets facets, records
+      result = {}
+      facets.each do |facet| 
+        facet = facet.to_s
+        temp = {}
+
+        records.each do |record|
+          name = record[facet]
+          temp[name] ||= 0
+          temp[name] += 1
+        end
+
+        facet_entries = temp.map do |name, value|
+          { name: name, value: value }
+        end
+
+        facet_entries.sort! {|e1, e2| e2[:value] <=> e1[:value] }
+        result[facet] = facet_entries
+      end
+      result
     end
 
   end
