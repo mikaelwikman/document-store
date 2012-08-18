@@ -107,17 +107,20 @@ class Store
         temp = {}
 
         records.each do |record|
-          name = record[facet]
+          name = record[facet] || 'unknown'
+          name = name.to_s
+          name = 'unknown' if name.strip == '' 
+
           temp[name] ||= 0
           temp[name] += 1
         end
 
         facet_entries = temp.map do |name, value|
-          { name: name, value: value }
+          { name: name.to_s, value: value }
         end
 
         facet_entries.sort! {|e1, e2| e2[:value] <=> e1[:value] }
-        result[facet] = facet_entries
+        result[facet.to_s] = facet_entries
       end
       result
     end

@@ -91,7 +91,9 @@ require 'em-synchrony'
 
       context '#collate' do
         setup do
-          @it.create('test_table', { duck: 'horse' })
+          @it.create('test_table', { duck: 1990 })
+          @it.create('test_table', { duck: nil })
+          @it.create('test_table', { duck: "" })
           @it.create('test_table', { duck: 'monkey' })
           @it.create('test_table', { duck: 'donkey' })
           @it.create('test_table', { duck: 'donkey' })
@@ -111,15 +113,16 @@ require 'em-synchrony'
 
         should 'include facets if given' do
           result = @it.collate('test_table', [], facets: [:duck])
-          assert_equal 4, result[:items].count
+          assert_equal 6, result[:items].count
           assert_equal 1, result[:facets].count
 
           entries = result[:facets]['duck']
           assert entries, "Expected facets to include 'duck'"
-          assert_equal 3, entries.count
+          assert_equal 4, entries.count
           assert_equal({ name: 'donkey', value: 2 } , entries[0])
-          assert_equal({ name: 'monkey', value: 1 } , entries[1])
-          assert_equal({ name: 'horse', value: 1 } , entries[2])
+          assert_equal({ name: 'unknown', value: 2 } , entries[1])
+          assert_equal({ name: 'monkey', value: 1 } , entries[2])
+          assert_equal({ name: '1990', value: 1 } , entries[3])
         end
       end
 
