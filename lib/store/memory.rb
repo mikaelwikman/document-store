@@ -127,13 +127,18 @@ class Store
 
     class EqualFilter
       def initialize field, value
-        @field = field
-        @value = value
+        @field = field.to_s
+
+        if value == 'unknown'
+          @value = ""
+        else
+          @value = value.to_s
+        end
       end
 
       def filter entries
         entries.find_all do |entry|
-          entry[@field.to_s] == @value
+          entry[@field].to_s.casecmp(@value) == 0
         end
       end
     end

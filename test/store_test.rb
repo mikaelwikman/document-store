@@ -72,20 +72,28 @@ require 'em-synchrony'
       context '#find' do
         setup do
           @it.create('test_table', { duck: 'horse' })
-          @it.create('test_table', { duck: 'monkey' })
+          @it.create('test_table', { duck: 'MoNkeY' })
           @it.create('test_table', { duck: 'donkey' })
+          @it.create('test_table', { noduckie: 'here' })
         end
 
-        should 'find entries by filter' do
+        should 'find entries case insensitive by filter' do
           filters = [@it.create_equal_filter(:duck, 'monkey')]
           result = @it.find('test_table', filters).map {|e| e}
           assert_equal 1, result.count
-          assert_equal 'monkey', result.first['duck']
+          assert_equal 'MoNkeY', result.first['duck']
         end
 
         should 'limit response size' do
           result = @it.find('test_table', [], limit: 1).map{|i|i}
           assert_equal 1, result.count
+        end
+
+        should 'treat \'unknown\' as nil or empty' do
+          filters = [@it.create_equal_filter(:duck, 'unknown')]
+          result = @it.find('test_table', filters).map {|e| e}
+          assert_equal 1, result.count
+          assert_equal 'here', result.first['noduckie']
         end
       end
 

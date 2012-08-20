@@ -43,6 +43,7 @@ class Store
       real_filters = {}
       filters.inject(real_filters) do |hash,f|
         f.add_filter(hash)
+        hash
       end
 
       collection(table).find(real_filters, opts)
@@ -117,7 +118,11 @@ class Store
     end
 
     def add_filter(hash)
-      hash[@field] = @value
+      if @value == 'unknown' 
+        hash[@field] = nil
+      else
+        hash[@field] = /#{@value}/i
+      end
     end
   end
 end
