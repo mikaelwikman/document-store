@@ -1,6 +1,6 @@
 require 'test_helper'
-require 'store/mongodb.rb'
-require 'store/memory.rb'
+require 'store/mongodb'
+require 'store/memory'
 require 'em-synchrony'
 
 [Store::Mongodb, Store::Memory].each do |store|
