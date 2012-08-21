@@ -81,6 +81,8 @@ class Store
         result[:facets] = calculate_facets(opts[:facets], result[:items])
       end
 
+      result[:count] = result[:items].count
+
       if limit
         result[:items].pop while result[:items].count > limit
       end

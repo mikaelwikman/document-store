@@ -149,6 +149,13 @@ require 'em-synchrony'
           assert_equal 1, result[:items].count
         end
 
+        should 'give information of total item count' do
+          result = @it.collate('test_table', [], limit: 1)
+          assert_equal 1, result[:items].count
+          assert_equal 6, result[:count]
+        end
+
+
         should 'include facets if given' do
           result = @it.collate('test_table', [], facets: [:duck])
           assert_equal 6, result[:items].count
