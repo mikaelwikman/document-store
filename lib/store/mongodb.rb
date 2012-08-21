@@ -134,7 +134,7 @@ class Store
       if @value == 'unknown' 
         hash[@field] = nil
       else
-        hash[@field] = /#{@value}/i
+        hash[@field] = /^#{@value}$/i
       end
     end
   end
