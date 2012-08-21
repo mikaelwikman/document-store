@@ -33,6 +33,35 @@ class Store
         values = filter.filter(values)
       end
 
+      if opts[:sort]
+        fields = opts[:sort].split(',')
+        fields.map! do |field|
+          sort = field.split('=')
+          [sort[0], (sort[1] || 1).to_i]
+        end
+
+        values.sort! do |e1,e2| 
+          order = 0
+
+          fields.each do |field|
+            name = field[0]
+            asc = field[1]
+            f1 = e1[name]
+            f2 = e2[name]
+
+            f1 = 1 if f1 == true
+            f1 = 0 if f1 == false
+            f2 = 1 if f2 == true
+            f2 = 0 if f2 == false
+
+            order = asc * ((f1 <=> f2) || 0)
+            break if order != 0
+          end
+
+          order
+        end
+      end
+
       if opts[:limit]
         values.pop while values.count > opts[:limit]
       end

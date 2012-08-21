@@ -46,6 +46,17 @@ class Store
         hash
       end
 
+      if opts[:sort]
+        fields = opts.delete(:sort).split(',')
+        opts[:sort] = []
+        fields.each do |field|
+          sort = field.split('=')
+          name = sort[0]
+          order = (sort[1] || '1') == '1' ? :asc : :desc
+          opts[:sort] << [name,order]
+        end
+      end
+
       collection(table).find(real_filters, opts)
     end
 

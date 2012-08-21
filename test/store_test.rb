@@ -71,10 +71,22 @@ require 'em-synchrony'
 
       context '#find' do
         setup do
-          @it.create('test_table', { duck: 'horse' })
-          @it.create('test_table', { duck: 'MoNkeY' })
-          @it.create('test_table', { duck: 'donkey' })
-          @it.create('test_table', { noduckie: 'here' })
+          @it.create('test_table', { 
+            duck: 'horse',
+            has_duck: true
+          })
+          @it.create('test_table', { 
+            duck: 'MoNkeY',
+            has_duck: true
+          })
+          @it.create('test_table', {
+            duck: 'donkey',
+            has_duck: true
+          })
+          @it.create('test_table', {
+            noduckie: 'here',
+            has_duck: false
+          })
         end
 
         should 'find entries case insensitive by filter' do
@@ -94,6 +106,24 @@ require 'em-synchrony'
           result = @it.find('test_table', filters).map {|e| e}
           assert_equal 1, result.count
           assert_equal 'here', result.first['noduckie']
+        end
+
+        should 'sort asc' do
+          result = @it.find('test_table', [], sort: 'has_duck=-1,duck=1').map {|e| e}
+          assert_equal 4, result.count
+          assert_equal 'MoNkeY', result[0]['duck']
+          assert_equal 'donkey', result[1]['duck']
+          assert_equal 'horse', result[2]['duck']
+          assert_equal 'here', result[3]['noduckie']
+        end
+
+        should 'sort desc' do
+          result = @it.find('test_table', [], sort: 'has_duck=-1,duck=-1').map {|e| e}
+          assert_equal 4, result.count
+          assert_equal 'horse', result[0]['duck']
+          assert_equal 'donkey', result[1]['duck']
+          assert_equal 'MoNkeY', result[2]['duck']
+          assert_equal 'here', result[3]['noduckie']
         end
       end
 
