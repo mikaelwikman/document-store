@@ -133,6 +133,8 @@ class Store
     def add_filter(hash)
       if @value == 'unknown' 
         hash[@field] = nil
+      elsif @value.kind_of?(BSON::ObjectId)
+        hash[@field] = @value
       else
         hash[@field] = /^#{@value}$/i
       end
