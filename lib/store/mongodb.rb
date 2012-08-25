@@ -2,6 +2,11 @@ require 'em-synchrony/em-mongo'
 
 class Store
   class Mongodb
+    attr_writer :timestamper
+    def timestamper
+      @timestamper ||= lambda { Time.new }
+    end
+
     def initialize database_name
       @database_name = database_name
     end
@@ -12,6 +17,7 @@ class Store
     end
 
     def create table, entry
+      entry['created_at'] = entry['updated_at'] = timestamper.call
       collection(table).insert(entry)
     end
 
@@ -21,9 +27,10 @@ class Store
       old_entry = collection(table).find(filter).first
 
       if old_entry
+        entry['updated_at'] = timestamper.call
         collection(table).update(filter, entry)
       else
-        collection(table).insert(entry)
+        create(table, entry)
       end
     end
 
@@ -136,7 +143,7 @@ class Store
       elsif @value.kind_of?(BSON::ObjectId)
         hash[@field] = @value
       else
-        hash[@field] = /^#{@value}$/i
+        hash[@field] = @value
       end
     end
   end

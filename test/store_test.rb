@@ -5,11 +5,23 @@ require 'em-synchrony'
 
 [Store::Mongodb, Store::Memory].each do |store|
   Class.new(TestCase).class_eval do 
+    should 'use current Time as default time stampre' do
+      val = store.new('hubo').timestamper.call 
+      assert val.kind_of?(Time)
+    end
+
+    should 'allow setting time stamper' do
+      s = store.new('hubo')
+      s.timestamper = lambda { 4 }
+      assert_equal 4, s.timestamper.call
+    end
 
     context "Testing #{store.name}" do
       setup do
         @it = store.new('testDb')
         @it.reset('test_table')
+        timestamp = 0
+        @it.timestamper = lambda { timestamp+=1 }
       end
 
       should '#all aggregate all results' do
@@ -29,44 +41,51 @@ require 'em-synchrony'
         result = @it.all('test_table')
         assert_equal 1, result.count
         assert_equal 'monkey', result.first['duck']
+        assert_equal 1, result.first['created_at']
       end
 
-      should 'update entry' do
-        id = @it.create('test_table', { duck: 'monkey' })
+      context '#update' do
+        should 'update given fields entry' do
+          id = @it.create('test_table', { duck: 'monkey' })
 
-        entry = { duck: 'history' }
+          entry = { duck: 'history' }
 
-        @it.update('test_table', id, entry)
+          @it.update('test_table', id, entry)
 
-        entries = @it.all('test_table')
+          entries = @it.all('test_table')
 
-        assert_equal 1, entries.count
-        assert_equal 'history', entries.first['duck']
-      end
+          assert_equal 1, entries.count
+          assert_equal 'history', entries.first['duck']
+          assert_equal 2, entries.first['updated_at']
+        end
 
-      should 'update entry by matcher' do
-        @it.create('test_table', { duck: 'monkey' })
-        @it.create('test_table', { duck: 'donkey' })
-        @it.create('test_table', { duck: 'congo' })
+        should 'update entry by matcher' do
+          @it.create('test_table', { duck: 'monkey' })
+          @it.create('test_table', { duck: 'donkey' })
+          @it.create('test_table', { duck: 'congo' })
 
-        @it.update('test_table', 
-                   { duck: 'donkey'}, 
-                   { duck: 'history'})
+          @it.update('test_table', 
+                     { duck: 'donkey'}, 
+                     { duck: 'history'})
 
-        entries = @it.all('test_table')
+          entries = @it.all('test_table')
 
-        assert_equal 3, entries.count
-        assert_equal 'monkey', entries[0]['duck']
-        assert_equal 'history', entries[1]['duck']
-        assert_equal 'congo', entries[2]['duck']
-      end
+          assert_equal 3, entries.count
+          assert_equal 'monkey', entries[0]['duck']
+          assert_equal 'history', entries[1]['duck']
+          assert_equal 'congo', entries[2]['duck']
+        end
 
-      should 'update should create if not exist' do
-        r = @it.update('test_table', {duck: 'donkey'}, { duck: 'donkey'})
+        should 'update should create if not exist' do
+          r = @it.update('test_table', {duck: 'donkey'}, { duck: 'donkey'})
 
-        entries = @it.all('test_table')
-        assert_equal 1, entries.count
-        assert_equal 'donkey', entries[0]['duck']
+          entries = @it.all('test_table')
+          assert_equal 1, entries.count
+          assert_equal 'donkey', entries[0]['duck']
+          assert_equal 1, entries[0]['updated_at']
+          assert_equal 1, entries[0]['created_at']
+        end
+
       end
 
       context '#find' do
@@ -89,8 +108,12 @@ require 'em-synchrony'
           })
         end
 
-        should 'find entries case insensitive by filter' do
+        should 'find entries case sensitive by filter' do
           filters = [@it.create_equal_filter(:duck, 'monkey')]
+          result = @it.find('test_table', filters).map {|e| e}
+          assert_equal 0, result.count
+
+          filters = [@it.create_equal_filter(:duck, 'MoNkeY')]
           result = @it.find('test_table', filters).map {|e| e}
           assert_equal 1, result.count
           assert_equal 'MoNkeY', result.first['duck']

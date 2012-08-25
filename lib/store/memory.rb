@@ -1,5 +1,10 @@
 class Store
   class Memory
+    attr_writer :timestamper
+    def timestamper
+      @timestamper || lambda {Time.new}
+    end
+
     def initialize database_name
       @collections = {}
       @id = 0
@@ -10,6 +15,7 @@ class Store
       entry.keys.each do |k|
         entry[k.to_s] = entry.delete(k)
       end
+      entry['updated_at'] = entry['created_at'] = timestamper.call
       collection(table)[@id] = entry
       @id
     end
@@ -115,6 +121,7 @@ class Store
       end
 
       entry = old_entry.merge(entry)
+      entry['updated_at'] = timestamper.call
 
       collection(table)[id] = entry
       nil
@@ -169,7 +176,7 @@ class Store
 
       def filter entries
         entries.find_all do |entry|
-          entry[@field].to_s.casecmp(@value) == 0
+          entry[@field].to_s == @value
         end
       end
     end
