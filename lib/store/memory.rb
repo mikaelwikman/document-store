@@ -166,17 +166,14 @@ class Store
     class EqualFilter
       def initialize field, value
         @field = field.to_s
-
-        if value == 'unknown'
-          @value = ""
-        else
-          @value = value.to_s
-        end
+        @value = value
+        @value = "" if value == 'unknown' || value == nil
       end
 
       def filter entries
         entries.find_all do |entry|
-          entry[@field].to_s == @value
+          value2 = entry[@field] || ''
+          value2 == @value
         end
       end
     end
