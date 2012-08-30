@@ -16,6 +16,7 @@ class Store
         entry[k.to_s] = entry.delete(k)
       end
       entry['updated_at'] = entry['created_at'] = timestamper.call
+      entry['_id'] = @id
       collection(table)[@id] = entry
       @id
     end
@@ -113,7 +114,7 @@ class Store
 
       if not old_entry
         create table, entry
-        return
+        return entry
       end
 
       entry.keys.each do |key|
@@ -124,7 +125,7 @@ class Store
       entry['updated_at'] = timestamper.call
 
       collection(table)[id] = entry
-      nil
+      entry
     end
 
     # filters

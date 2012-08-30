@@ -48,7 +48,7 @@ require 'em-synchrony'
         should 'update given fields entry' do
           id = @it.create('test_table', { duck: 'monkey' })
 
-          entry = { duck: 'history' }
+          entry = { 'duck' => 'history' }
 
           @it.update('test_table', id, entry)
 
@@ -65,8 +65,8 @@ require 'em-synchrony'
           @it.create('test_table', { duck: 'congo' })
 
           @it.update('test_table', 
-                     { duck: 'donkey'}, 
-                     { duck: 'history'})
+                     { 'duck' => 'donkey'}, 
+                     { 'duck' => 'history'})
 
           entries = @it.all('test_table')
 
@@ -77,7 +77,7 @@ require 'em-synchrony'
         end
 
         should 'update should create if not exist' do
-          r = @it.update('test_table', {duck: 'donkey'}, { duck: 'donkey'})
+          r = @it.update('test_table', {'duck' => 'donkey'}, { 'duck' => 'donkey'})
 
           entries = @it.all('test_table')
           assert_equal 1, entries.count
@@ -86,6 +86,20 @@ require 'em-synchrony'
           assert_equal 1, entries[0]['created_at']
         end
 
+        should 'return the resulting entry while updating' do
+          id = @it.create('test_table', { duck: 'monkey', paid_taxes: true })
+          entry = @it.update('test_table', id, 'duck' => 'history')
+
+          assert_equal 'history', entry['duck']
+          assert_equal true, entry['paid_taxes']
+        end
+
+        should 'return the resulting entry after created' do
+          entry = @it.update('test_table', { 'duck' => 'history' }, 'duck' => 'history')
+
+          assert_equal 'history', entry['duck']
+          assert entry['_id'], 'ID should be set'
+        end
       end
 
       context '#find' do

@@ -22,15 +22,21 @@ class Store
     end
 
     def update table, id, entry
+      if entry.keys.any?{|key| key.kind_of?(Symbol) }
+        raise "MongoDb can't handle symbols, use only string keys!"
+      end
       filter = id.kind_of?(Hash) ? id : { _id: id }
 
       old_entry = collection(table).find(filter).first
 
       if old_entry
+        entry = old_entry.merge(entry)
         entry['updated_at'] = timestamper.call
         collection(table).update(filter, entry)
+        entry
       else
-        create(table, entry)
+        id = create(table, entry)
+        collection(table).find('_id' => id).first
       end
     end
 
