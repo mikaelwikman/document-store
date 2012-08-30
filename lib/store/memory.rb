@@ -11,14 +11,15 @@ class Store
     end
 
     def create table, entry
-      @id += 1
+      if !entry['_id']
+        entry['_id'] = @id += 1
+      end
       entry.keys.each do |k|
         entry[k.to_s] = entry.delete(k)
       end
       entry['updated_at'] = entry['created_at'] = timestamper.call
-      entry['_id'] = @id
-      collection(table)[@id] = entry
-      @id
+      collection(table)[entry['_id']] = entry
+      entry['_id']
     end
 
     def all table
