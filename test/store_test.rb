@@ -192,19 +192,21 @@ require 'em-synchrony'
           assert_equal 6, result[:count]
         end
 
-
         should 'include facets if given' do
+          @it.create('test_table', { duck: ['donkey', 'muppet'] })
+
           result = @it.collate('test_table', [], facets: [:duck])
-          assert_equal 6, result[:items].count
+          assert_equal 7, result[:items].count
           assert_equal 1, result[:facets].count
 
           entries = result[:facets]['duck']
           assert entries, "Expected facets to include 'duck'"
-          assert_equal 4, entries.count
-          assert_equal({ name: 'donkey', value: 2 } , entries[0])
+          assert_equal 5, entries.count
+          assert_equal({ name: 'donkey', value: 3 } , entries[0])
           assert_equal({ name: 'unknown', value: 2 } , entries[1])
           assert_equal({ name: 'monkey', value: 1 } , entries[2])
           assert_equal({ name: '1990', value: 1 } , entries[3])
+          assert_equal({ name: 'muppet', value: 1 } , entries[4])
         end
       end
 

@@ -147,12 +147,17 @@ class Store
         temp = {}
 
         records.each do |record|
-          name = record[facet] || 'unknown'
-          name = name.to_s
-          name = 'unknown' if name.strip == '' 
+          record_value = record[facet] || 'unknown'
 
-          temp[name] ||= 0
-          temp[name] += 1
+          r = record_value.kind_of?(Array) ? record_value : [record_value]
+
+          r.each do |value|
+            value = value.to_s
+            value = 'unknown' if value.strip == '' 
+
+            temp[value] ||= 0
+            temp[value] += 1
+          end
         end
 
         facet_entries = temp.map do |name, value|
