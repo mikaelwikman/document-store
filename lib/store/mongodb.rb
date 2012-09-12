@@ -77,6 +77,7 @@ class Store
       # need to get all items, or else we can't calculate facets
       limit = opts.delete(:limit)
       facets = opts.delete(:facets)
+      facetlimit = opts.delete(:facetlimit)
 
       result = {
         items: find(table, filters, opts)
@@ -84,6 +85,12 @@ class Store
 
       if facets
         result[:facets] = calculate_facets(facets, result[:items])
+
+        if facetlimit
+          result[:facets].each do |k,v|
+            v.pop while v.count > facetlimit
+          end
+        end
       end
 
       result[:count] = result[:items].count
@@ -94,7 +101,6 @@ class Store
 
       result
     end
-
 
     # filter factories
     def create_equal_filter field, name

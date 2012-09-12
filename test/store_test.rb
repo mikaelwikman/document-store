@@ -1,9 +1,18 @@
 require 'test_helper'
 require 'store/mongodb'
 require 'store/memory'
+require 'store/cache'
 require 'em-synchrony'
 
-[Store::Mongodb, Store::Memory].each do |store|
+# The cache store differs in initializer from the others, so we'll
+# create a fake one to initialize it properly
+class CacheStore < Store::Cache
+  def initialize database
+    super(Store::Memory.new(database))
+  end
+end
+
+[Store::Mongodb, Store::Memory, CacheStore].each do |store|
   Class.new(TestCase).class_eval do 
     should 'use current Time as default time stampre' do
       val = store.new('hubo').timestamper.call 
@@ -207,6 +216,13 @@ require 'em-synchrony'
           assert_equal({ name: 'monkey', value: 1 } , entries[2])
           assert_equal({ name: '1990', value: 1 } , entries[3])
           assert_equal({ name: 'muppet', value: 1 } , entries[4])
+        end
+
+        should 'limit facet entries count, cutting lesser important' do
+          result = @it.collate('test_table', [], facets: [:duck], facetlimit: 2)
+          entries = result[:facets]['duck']
+          assert_equal 2, entries.count
+          assert_equal({ name: 'donkey', value: 2 } , entries[0])
         end
       end
 

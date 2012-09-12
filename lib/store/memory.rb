@@ -80,6 +80,7 @@ class Store
     def collate table, filters, opts={}
       # need to get all items, or else we can't calculate facets
       limit = opts.delete(:limit)
+      facetlimit = opts.delete(:facetlimit)
 
       result = {
         items: find(table, filters, opts)
@@ -87,6 +88,12 @@ class Store
 
       if opts[:facets]
         result[:facets] = calculate_facets(opts[:facets], result[:items])
+
+        if facetlimit
+          result[:facets].each do |k,v|
+            v.pop while v.count > facetlimit
+          end
+        end
       end
 
       result[:count] = result[:items].count
