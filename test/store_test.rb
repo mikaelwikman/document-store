@@ -142,6 +142,13 @@ end
           assert_equal 'MoNkeY', result.first['duck']
         end
 
+        should 'handle boolean filters' do
+          filters = [@it.create_equal_filter(:has_duck, false)]
+          result = @it.find('test_table', filters).map {|e| e}
+          assert_equal 1, result.count
+          assert_equal 'here', result.first['noduckie']
+        end
+
         should 'limit response size' do
           result = @it.find('test_table', [], limit: 1).map{|i|i}
           assert_equal 1, result.count

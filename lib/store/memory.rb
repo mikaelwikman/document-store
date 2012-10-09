@@ -186,7 +186,8 @@ class Store
 
       def filter entries
         entries.find_all do |entry|
-          value2 = entry[@field] || ''
+          value2 = entry[@field]
+          value2 = '' if value2 == nil
           value2 == @value
         end
       end
