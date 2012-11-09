@@ -70,6 +70,11 @@ class Store
         end
       end
 
+      if opts[:start]
+        start = opts.delete(:start)
+        opts[:skip] = start
+      end
+
       collection(table).find(real_filters, opts)
     end
 

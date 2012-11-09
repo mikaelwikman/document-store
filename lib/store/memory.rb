@@ -70,6 +70,12 @@ class Store
         end
       end
 
+      if opts[:start]
+        opts[:start].times do |i|
+          values.shift
+        end
+      end
+
       if opts[:limit]
         values.pop while values.count > opts[:limit]
       end

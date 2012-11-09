@@ -154,6 +154,13 @@ end
           assert_equal 1, result.count
         end
 
+        should 'set zero-based start index' do
+          result = @it.find('test_table', [], start: 2).map{|i|i}
+          assert_equal 2, result.count
+          assert_equal 'donkey', result[0]['duck']
+          assert_equal 'here', result[1]['noduckie']
+        end
+
         should 'treat \'unknown\' as nil or empty' do
           filters = [@it.create_equal_filter(:duck, 'unknown')]
           result = @it.find('test_table', filters).map {|e| e}
@@ -201,6 +208,14 @@ end
           result = @it.collate('test_table', [], limit: 1)
           assert_equal 1, result[:items].count
         end
+
+        should 'set zero-based start index' do
+          result = @it.collate('test_table', [], start: 3, limit: 2)
+          assert_equal 2, result[:items].count
+          assert_equal 'monkey', result[:items][0]['duck']
+          assert_equal 'donkey', result[:items][1]['duck']
+        end
+
 
         should 'give information of total item count' do
           result = @it.collate('test_table', [], limit: 1)
