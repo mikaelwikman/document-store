@@ -131,6 +131,17 @@ end
           })
         end
 
+        should 'treat "unknown" as empty string as unexisting' do
+          @it.create('test_table', {
+            verify: true
+          })
+          filters = [@it.create_equal_filter(:duck, 'unknown')]
+          r = @it.find('test_table', filters)
+          assert_equal 2, r.count
+          assert_equal 'here', r[0]['noduckie']
+          assert_equal true, r[1]['verify']
+        end
+
         should 'find entries case sensitive by filter' do
           filters = [@it.create_equal_filter(:duck, 'monkey')]
           result = @it.find('test_table', filters).map {|e| e}
