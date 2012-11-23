@@ -33,6 +33,14 @@ end
         @it.timestamper = lambda { timestamp+=1 }
       end
 
+      should '#count' do 
+        id = @it.create('test_table', { duck: 'monkey' })
+        id = @it.create('test_table', { duck: 'monkey' })
+        id = @it.create('testosteron_table', { duck: 'monkey' })
+
+        assert_equal 2, @it.count('test_table')
+      end
+
       should '#all aggregate all results' do
         id = @it.create('test_table', { duck: 'monkey' })
 

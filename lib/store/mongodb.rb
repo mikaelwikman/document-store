@@ -44,6 +44,10 @@ class Store
       each(table).map{|i|i}
     end
 
+    def count table
+      collection(table).count
+    end
+
     def each table, &block
       collection(table).find &block
     end

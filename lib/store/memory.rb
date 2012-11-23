@@ -26,6 +26,10 @@ class Store
       collection(table).values
     end
 
+    def count table
+      collection(table).count
+    end
+
     def each table, &block
       collection(table).values.each &block
     end

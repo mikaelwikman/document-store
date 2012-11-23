@@ -35,6 +35,10 @@ class Store
       each(table).map{|i|i}
     end
 
+    def count table
+      backend.count(table)
+    end
+
     def each table
       if data=cache_load(table)
         data
