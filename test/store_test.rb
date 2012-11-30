@@ -252,18 +252,20 @@ end
           entries = result[:facets]['duck']
           assert entries, "Expected facets to include 'duck'"
           assert_equal 5, entries.count
-          assert_equal({ name: 'donkey', value: 3 } , entries[0])
-          assert_equal({ name: 'unknown', value: 2 } , entries[1])
-          assert_equal({ name: 'monkey', value: 1 } , entries[2])
-          assert_equal({ name: '1990', value: 1 } , entries[3])
-          assert_equal({ name: 'muppet', value: 1 } , entries[4])
+          assert_equal [
+            ['donkey'  , 3],
+            ['unknown' , 2],
+            ['monkey'  , 1],
+            ['1990'    , 1],
+            ['muppet'  , 1],
+          ], entries
         end
 
         should 'limit facet entries count, cutting lesser important' do
           result = @it.collate('test_table', [], facets: [:duck], facetlimit: 2)
           entries = result[:facets]['duck']
           assert_equal 2, entries.count
-          assert_equal({ name: 'donkey', value: 2 } , entries[0])
+          assert_equal(['donkey', 2], entries[0])
         end
       end
 

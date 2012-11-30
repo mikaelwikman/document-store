@@ -178,10 +178,10 @@ class Store
         end
 
         facet_entries = temp.map do |name, value|
-          { name: name.to_s, value: value }
+          [name.to_s, value]
         end
 
-        facet_entries.sort! {|e1, e2| e2[:value] <=> e1[:value] }
+        facet_entries.sort! {|e1, e2| e2[1] <=> e1[1] }
         result[facet.to_s] = facet_entries
       end
       result
