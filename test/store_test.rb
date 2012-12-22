@@ -14,12 +14,13 @@ end
 
 [Store::Mongodb, Store::Memory, CacheStore].each do |store|
   Class.new(TestCase).class_eval do 
-    should 'use current Time as default time stampre' do
+
+    should store.name+ ' use current Time as default time stamper' do
       val = store.new('hubo').timestamper.call 
       assert val.kind_of?(Time)
     end
 
-    should 'allow setting time stamper' do
+    should store.name+ 'allow setting time stamper' do
       s = store.new('hubo')
       s.timestamper = lambda { 4 }
       assert_equal 4, s.timestamper.call
