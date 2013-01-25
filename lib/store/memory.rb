@@ -89,6 +89,7 @@ class Store
 
     def collate table, filters, opts={}
       # need to get all items, or else we can't calculate facets
+      start = opts.delete(:start)
       limit = opts.delete(:limit)
       facetlimit = opts.delete(:facetlimit)
 
@@ -107,6 +108,12 @@ class Store
       end
 
       result[:count] = result[:items].count
+
+      if start
+        start.times do |i|
+          result[:items].shift
+        end
+      end
 
       if limit
         result[:items].pop while result[:items].count > limit

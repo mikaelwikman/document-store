@@ -237,10 +237,16 @@ end
         end
 
 
-        should 'give information of total item count' do
-          result = @it.collate('test_table', [], limit: 1)
-          assert_equal 1, result[:items].count
-          assert_equal 6, result[:count]
+        context 'total count' do
+          should 'not be affected by limit' do
+            result = @it.collate('test_table', [], limit: 1)
+            assert_equal 6, result[:count]
+          end
+
+          should 'not be affected by start' do
+            result = @it.collate('test_table', [], start: 3)
+            assert_equal 6, result[:count]
+          end
         end
 
         should 'include facets if given' do
