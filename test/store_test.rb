@@ -6,13 +6,22 @@ require 'em-synchrony'
 
 # The cache store differs in initializer from the others, so we'll
 # create a fake one to initialize it properly
-class CacheStore < Store::Cache
+class InMemoryCacheStore < Store::Cache
   def initialize database
     super(Store::Memory.new(database))
   end
 end
+#class MemcachedStore < Store::Cache
+#  def initialize database
+#    super(Store::Memory.new(database), memcached: true)
+#  end
+#end
 
-[Store::Mongodb, Store::Memory, CacheStore].each do |store|
+[
+  Store::Mongodb,
+  Store::Memory,
+  InMemoryCacheStore
+].each do |store|
   Class.new(TestCase).class_eval do 
 
     should store.name+ ' use current Time as default time stamper' do
@@ -30,6 +39,7 @@ end
       setup do
         @it = store.new('testDb')
         @it.reset('test_table')
+        @it.reset('testosteron_table')
         timestamp = 0
         @it.timestamper = lambda { timestamp+=1 }
       end

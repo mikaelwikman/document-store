@@ -13,4 +13,5 @@ Gem::Specification.new do |gem|
   gem.name          = "store"
   gem.require_paths = ["lib"]
   gem.version       = 0.1
+  gem.add_dependency 'em-synchrony'
 end

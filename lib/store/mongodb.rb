@@ -53,7 +53,7 @@ class Store
     end
 
     def reset table
-      collection(table).remove({})
+      collection(table).remove()
     end
 
     def find table, filters, opts={}

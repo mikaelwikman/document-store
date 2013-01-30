@@ -1,11 +1,17 @@
+require 'store/caches/in_memory'
+require 'store/caches/memcached'
 
 class Store
   class Cache
     attr_reader :backend
     
-    def initialize backend_store
+    def initialize backend_store, args={}
       @backend = backend_store
-      @cache = {}
+      if args[:memcached]
+        @cache = Caches::Memcached.new
+      else
+        @cache = Caches::InMemory.new
+      end
     end
 
     def timestamper= ts
@@ -17,17 +23,17 @@ class Store
     end
 
     def close
-      invalidate_cache
+      @cache.invalidate
       backend.close
     end
 
     def create *args
-      invalidate_cache
+      @cache.invalidate
       backend.create *args
     end
 
     def update *args
-      invalidate_cache
+      @cache.invalidate
       backend.update *args
     end
 
@@ -40,61 +46,44 @@ class Store
     end
 
     def each table
-      if data=cache_load(table)
+      if data=@cache.load(table)
         data
       else
         data = backend.all(table)
-        cache_save table, data
+        @cache.save table, data
         data
       end
     end
 
     def reset *args
-      invalidate_cache
+      @cache.invalidate
       backend.reset(*args)
     end
 
     def find *args
       key = Marshal.dump(args)
-      if data=cache_load(key)
+      if data=@cache.load(key)
         data
       else
         data = backend.find(*args)
-        cache_save key, data
+        @cache.save key, data
         data
       end
     end
 
     def collate *args
       key = Marshal.dump(args)
-      if data=cache_load(key)
+      if data=@cache.load(key)
         data
       else
         data = backend.collate(*args)
-        cache_save(key,data)
+        @cache.save(key,data)
         data
       end
     end
 
     def create_equal_filter *args
       backend.create_equal_filter(*args)
-    end
-
-    private
-
-    def invalidate_cache
-      @cache = {}
-    end
-
-    def cache_load key
-      data = @cache[key]
-      if data
-        Marshal.load(data)
-      end
-    end
-
-    def cache_save key, data
-      @cache[key] = Marshal.dump(data)
     end
 
   end
