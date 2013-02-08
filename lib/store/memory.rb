@@ -157,6 +157,15 @@ class Store
     def create_equal_filter field, value
       EqualFilter.new(field,value)
     end
+    def create_lt_filter field, value
+      LTFilter.new(field,value)
+    end
+    def create_gt_filter field, value
+      GTFilter.new(field,value)
+    end
+    def create_gte_filter field, value
+      GTEFilter.new(field,value)
+    end
 
     private 
 
@@ -206,6 +215,53 @@ class Store
           value2 = entry[@field]
           value2 = '' if value2 == nil
           value2 == @value
+        end
+      end
+    end
+
+    class LTFilter
+      def initialize field, value
+        @field = field.to_s
+        @value = value
+        @value = "" if value == 'unknown' || value == nil
+      end
+
+      def filter entries
+        entries.find_all do |entry|
+          value2 = entry[@field]
+          value2 = '' if value2 == nil
+          value2 < @value
+        end
+      end
+    end
+
+    class GTFilter
+      def initialize field, value
+        @field = field.to_s
+        @value = value
+        @value = "" if value == 'unknown' || value == nil
+      end
+
+      def filter entries
+        entries.find_all do |entry|
+          value2 = entry[@field]
+          value2 = '' if value2 == nil
+          value2 > @value
+        end
+      end
+    end
+    class GTEFilter
+      def initialize field, value
+        @field = field.to_s
+        @value = value
+        @value = "" if value == 'unknown' || value == nil
+      end
+
+      def filter entries
+        entries.find_all do |entry|
+          value2 = entry[@field]
+          value2 = '' if value2 == nil
+          value2 >= @value
         end
       end
     end

@@ -85,6 +85,14 @@ class Store
     def create_equal_filter *args
       backend.create_equal_filter(*args)
     end
-
+    def create_lt_filter *args
+      backend.create_lt_filter(*args)
+    end
+    def create_gt_filter *args
+      backend.create_gt_filter(*args)
+    end
+    def create_gte_filter *args
+      backend.create_gte_filter(*args)
+    end
   end
 end

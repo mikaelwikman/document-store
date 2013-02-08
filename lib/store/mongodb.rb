@@ -122,6 +122,15 @@ class Store
     def create_equal_filter field, name
       EqualFilter.new(field, name)
     end
+    def create_lt_filter field, name
+      LTFilter.new(field, name)
+    end
+    def create_gt_filter field, name
+      GTFilter.new(field, name)
+    end
+    def create_gte_filter field, name
+      GTEFilter.new(field, name)
+    end
 
     private
 
@@ -163,20 +172,61 @@ class Store
       result
     end
 
-  end
+    class EqualFilter
+      def initialize(field, value)
+        @field = field; @value = value
+      end
 
-  class EqualFilter
-    def initialize(field, value)
-      @field = field; @value = value
+      def add_filter(hash)
+        if @value == 'unknown' 
+          hash[@field] = nil
+        elsif @value.kind_of?(BSON::ObjectId)
+          hash[@field] = @value
+        else
+          hash[@field] = @value
+        end
+      end
     end
 
-    def add_filter(hash)
-      if @value == 'unknown' 
-        hash[@field] = nil
-      elsif @value.kind_of?(BSON::ObjectId)
-        hash[@field] = @value
-      else
-        hash[@field] = @value
+    class LTFilter
+      def initialize(field, value)
+        @field = field; @value = value
+      end
+
+      def add_filter(hash)
+        h = hash[@field] ||= {}
+
+        if @value != 'unknown'
+          h['$lt'] = @value
+        end
+      end
+    end
+
+    class GTFilter
+      def initialize(field, value)
+        @field = field; @value = value
+      end
+
+      def add_filter(hash)
+        h = hash[@field] ||= {}
+
+        if @value != 'unknown'
+          h['$gt'] = @value
+        end
+      end
+    end
+
+    class GTEFilter
+      def initialize(field, value)
+        @field = field; @value = value
+      end
+
+      def add_filter(hash)
+        h = hash[@field] ||= {}
+
+        if @value != 'unknown'
+          h['$gte'] = @value
+        end
       end
     end
   end

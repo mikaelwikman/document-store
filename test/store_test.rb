@@ -134,19 +134,23 @@ end
         setup do
           @it.create('test_table', { 
             duck: 'horse',
-            has_duck: true
+            has_duck: true,
+            number: 1
           })
           @it.create('test_table', { 
             duck: 'MoNkeY',
-            has_duck: true
+            has_duck: true,
+            number: 2
           })
           @it.create('test_table', {
             duck: 'donkey',
-            has_duck: true
+            has_duck: true,
+            number: 3
           })
           @it.create('test_table', {
             noduckie: 'here',
-            has_duck: false
+            has_duck: false,
+            number: 4
           })
         end
 
@@ -172,11 +176,37 @@ end
           assert_equal 'MoNkeY', result.first['duck']
         end
 
-        should 'handle boolean filters' do
-          filters = [@it.create_equal_filter(:has_duck, false)]
-          result = @it.find('test_table', filters).map {|e| e}
-          assert_equal 1, result.count
-          assert_equal 'here', result.first['noduckie']
+        context 'filters' do
+
+          should 'equal' do
+            filters = [@it.create_equal_filter(:has_duck, false)]
+            result = @it.find('test_table', filters).map {|e| e}
+            assert_equal 1, result.count
+            assert_equal 'here', result.first['noduckie']
+          end
+          
+          should 'less-than' do
+            filters = [@it.create_lt_filter(:number, 3)]
+            result = @it.find('test_table', filters).map {|e| e}
+            assert_equal 2, result.count
+            assert_equal 1, result[0]['number']
+            assert_equal 2, result[1]['number']
+          end
+
+          should 'greater-than' do
+            filters = [@it.create_gt_filter(:number, 3)]
+            result = @it.find('test_table', filters).map {|e| e}
+            assert_equal 1, result.count
+            assert_equal 4, result[0]['number']
+          end
+
+          should 'greater-or-equal' do
+            filters = [@it.create_gte_filter(:number, 3)]
+            result = @it.find('test_table', filters).map {|e| e}
+            assert_equal 2, result.count
+            assert_equal 3, result[0]['number']
+            assert_equal 4, result[1]['number']
+          end
         end
 
         should 'limit response size' do
