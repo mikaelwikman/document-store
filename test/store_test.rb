@@ -128,6 +128,16 @@ end
           assert_equal 'history', entry['duck']
           assert entry['_id'], 'ID should be set'
         end
+
+        should 'make partial updates' do
+          entry = @it.create('test_table', { 'duck' => 'history', paid_taxes: true })
+          entry = @it.update('test_table', { 'duck' => 'history' }, 'duck' => 'monkey')
+
+          entries = @it.all('test_table')
+          assert_equal 1, entries.count
+          assert_equal 'monkey', entries[0]['duck']
+          assert_equal true, entries[0]['paid_taxes']
+        end
       end
 
       context '#find' do
