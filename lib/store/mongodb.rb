@@ -20,7 +20,20 @@ class Store
     def create table, entry
       connect do |db|
         entry['created_at'] = entry['updated_at'] = timestamper.call
-        db.collection(table).insert(entry)
+
+        resp = db.collection(table).safe_insert(entry)
+
+        f = Fiber.current
+        resp.callback{|doc| f.resume(doc)}
+        resp.errback{|err| f.resume(:err, err)}
+
+        result, error = Fiber.yield
+
+        if result == :err
+          raise error.inspect
+        else
+          result
+        end
       end
     end
 
