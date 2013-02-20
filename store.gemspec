@@ -14,4 +14,5 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = 0.1
   gem.add_dependency 'em-synchrony'
+  gem.add_dependency 'em-mongo', '0.4.3'
 end

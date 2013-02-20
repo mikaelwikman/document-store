@@ -9,6 +9,7 @@ class Store
 
     def initialize database_name
       @database_name = database_name
+      @free_connections ||= []
     end
 
     def close
@@ -17,8 +18,10 @@ class Store
     end
 
     def create table, entry
-      entry['created_at'] = entry['updated_at'] = timestamper.call
-      collection(table).insert(entry)
+      connect do |db|
+        entry['created_at'] = entry['updated_at'] = timestamper.call
+        db.collection(table).insert(entry)
+      end
     end
 
     def update table, id, entry
@@ -27,16 +30,18 @@ class Store
       end
       filter = id.kind_of?(Hash) ? id : { _id: id }
 
-      old_entry = collection(table).find(filter).first
+      connect do |db|
+        old_entry = db.collection(table).find(filter)
 
-      if old_entry
-        entry = old_entry.merge(entry)
-        entry['updated_at'] = timestamper.call
-        collection(table).update(filter, entry)
-        entry
-      else
-        id = create(table, entry)
-        collection(table).find('_id' => id).first
+        if old_entry && old_entry=old_entry[0]
+          entry = old_entry.merge(entry)
+          entry['updated_at'] = timestamper.call
+          db.collection(table).safe_update(filter, entry)
+          entry
+        else
+          id = create(table, entry)
+          db.collection(table).find('_id' => id).first
+        end
       end
     end
 
@@ -45,15 +50,21 @@ class Store
     end
 
     def count table
-      collection(table).count
+      connect do |db|
+        db.collection(table).count
+      end
     end
 
     def each table, &block
-      collection(table).find &block
+      connect do |db|
+        db.collection(table).find &block
+      end
     end
 
     def reset table
-      collection(table).remove()
+      connect do |db|
+        db.collection(table).remove()
+      end
     end
 
     def find table, filters, opts={}
@@ -79,7 +90,9 @@ class Store
         opts[:skip] = start
       end
 
-      collection(table).find(real_filters, opts)
+      connect do |db|
+        db.collection(table).find(real_filters, opts)
+      end
     end
 
     def collate table, filters, opts={}
@@ -134,12 +147,18 @@ class Store
 
     private
 
-    def collection name
-      db.collection(name)
-    end
+    def connect
+      # some simple connection pooling to avoid conflicts..
 
-    def db
-      @db ||= EM::Mongo::Connection.new.db(@database_name)
+      con = if @free_connections.length > 0
+        @free_connections.pop
+      else
+        EM::Mongo::Connection.new.db(@database_name)
+      end
+
+      result = yield(con)
+      @free_connections << con
+      result
     end
 
     def calculate_facets facets, records
