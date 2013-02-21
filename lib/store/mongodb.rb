@@ -1,4 +1,4 @@
-require 'em-synchrony/em-mongo'
+require 'em-mongo'
 
 class Store
   class Mongodb
@@ -41,36 +41,45 @@ class Store
       if entry.keys.any?{|key| key.kind_of?(Symbol) }
         raise "MongoDb can't handle symbols, use only string keys!"
       end
+      matcher = []
       filter = id.kind_of?(Hash) ? id : { _id: id }
 
-      connect do |db|
-        old_entry = db.collection(table).find(filter)
+      filter.each do |k,v|
+        matcher << create_equal_filter(k,v)
+      end
 
-        if old_entry && old_entry=old_entry[0]
+      connect do |db|
+        old_entry = find(table, matcher).first
+
+        if old_entry
           entry = old_entry.merge(entry)
           entry['updated_at'] = timestamper.call
-          db.collection(table).safe_update(filter, entry)
+
+          f = Fiber.current
+          resp = db.collection(table).safe_update(filter, entry)
+          resp.errback{|err| exit -1}
+          resp.callback{|doc| f.resume doc}
+          Fiber.yield
           entry
         else
           id = create(table, entry)
-          db.collection(table).find('_id' => id).first
+          find(table, matcher).first
         end
       end
     end
 
     def all table
-      each(table).map{|i|i}
+      find(table,{})
     end
 
     def count table
       connect do |db|
-        db.collection(table).count
-      end
-    end
+        resp = db.collection(table).count
+        f = Fiber.current
+        resp.callback {|count| f.resume count }
+        resp.errback {|err| raise err }
 
-    def each table, &block
-      connect do |db|
-        db.collection(table).find &block
+        Fiber.yield
       end
     end
 
@@ -104,7 +113,17 @@ class Store
       end
 
       connect do |db|
-        db.collection(table).find(real_filters, opts)
+        f = Fiber.current
+        docs = []
+        resp = db.collection(table).find(real_filters, opts).each do |doc|
+          if doc
+            docs << doc
+          else
+            f.resume
+          end
+        end
+        Fiber.yield
+        docs
       end
     end
 

@@ -73,6 +73,21 @@ end
       end
 
       context '#update' do
+        should 'handle many concurrent updates' do
+          id = @it.create('test_table', { duck: 'monkey' })
+
+          100.times do
+            f = Fiber.new do
+              entry = { 'duck' => 'history' }
+              @it.update('test_table', id, entry)
+            end
+
+            EM.next_tick { f.resume }
+          end
+
+          EM::Synchrony.sleep(0.1)
+        end
+
         should 'update given fields entry' do
           id = @it.create('test_table', { duck: 'monkey' })
 
