@@ -119,7 +119,7 @@ class Store
           if doc
             docs << doc
           else
-            f.resume
+            f.resume if f.alive?
           end
         end
         Fiber.yield
