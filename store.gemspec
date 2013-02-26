@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|features)/})
   gem.name          = "store"
   gem.require_paths = ["lib"]
-  gem.version       = 0.1
+  gem.version       = '0.1.0'
   gem.add_dependency 'em-synchrony'
   gem.add_dependency 'em-mongo', '0.4.3'
 end
