@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sc-store (0.2.0)
+    sc-store (0.2.1)
       em-mongo (= 0.4.3)
       em-synchrony
 
