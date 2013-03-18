@@ -185,7 +185,7 @@ class Store
       con = if @free_connections.length > 0
         @free_connections.pop
       else
-        EM::Mongo::Connection.new.db(@database_name)
+        EM::Mongo::Connection.new(slave_ok: true).db(@database_name)
       end
 
       result = yield(con)
