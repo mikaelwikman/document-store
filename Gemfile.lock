@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sc-store (0.2.1)
+    document-store (1.0.0)
       em-mongo (= 0.4.3)
       em-synchrony
 
@@ -12,7 +12,8 @@ GEM
       i18n (~> 0.6)
       multi_json (~> 1.0)
     ansi (1.4.3)
-    bson (1.8.3)
+    bson (1.9.2)
+    em-minitest (1.0.1)
     em-mongo (0.4.3)
       bson (>= 1.1.3)
       eventmachine (>= 0.12.10)
@@ -21,10 +22,10 @@ GEM
     eventmachine (1.0.3)
     i18n (0.6.0)
     metaclass (0.0.1)
-    mocha (0.12.3)
+    mocha (0.14.0)
       metaclass (~> 0.0.1)
     multi_json (1.3.6)
-    rake (10.0.3)
+    rake (10.1.0)
     shoulda (3.1.1)
       shoulda-context (~> 1.0)
       shoulda-matchers (~> 1.2)
@@ -38,8 +39,9 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  document-store!
+  em-minitest
   mocha
   rake
-  sc-store!
   shoulda
   turn

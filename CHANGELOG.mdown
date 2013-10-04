@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 1.0.0
+
+* Change gem name to document-store
+
 ## 0.2
 
 * Allow `slave_ok` for mongo connection
