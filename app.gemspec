@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.email         = ['mikael@wikman.me']
   gem.description   = %q{This wrapper provides a minimalistic interfaced to document-based databases. It includes a in-memory store that can be easily used for writing tests, as well as a in-memory cached version of each implementation.}
   gem.summary       = %q{A wrapper around document-based databases to provide a minimalistic interface that can be easily changed}
-  gem.homepage      = ""
+  gem.homepage      = "https://github.com/mikaelwikman/document-store"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
