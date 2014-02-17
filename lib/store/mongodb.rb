@@ -1,8 +1,11 @@
-require 'em-mongo'
+require 'mongo'
 
 class Store
   class Mongodb
     attr_writer :timestamper
+
+    @@client = Mongo::MongoClient.new('localhost', 27017, slave_ok: true, pool_size: 5, pool_timeout: 5)
+
     def timestamper
       @timestamper ||= lambda { Time.new }
     end
@@ -21,19 +24,7 @@ class Store
       connect do |db|
         entry['created_at'] = entry['updated_at'] = timestamper.call
 
-        resp = db.collection(table).safe_insert(entry)
-
-        f = Fiber.current
-        resp.callback{|doc| f.resume(doc)}
-        resp.errback{|err| f.resume(:err, err)}
-
-        result, error = Fiber.yield
-
-        if result == :err
-          raise error.inspect
-        else
-          result
-        end
+        db[table].insert(entry, w: 1)
       end
     end
 
@@ -55,12 +46,13 @@ class Store
           entry = old_entry.merge(entry)
           entry['updated_at'] = timestamper.call
 
-          f = Fiber.current
-          resp = db.collection(table).safe_update(filter, entry)
-          resp.errback{|err| exit -1}
-          resp.callback{|doc| f.resume doc}
-          Fiber.yield
-          entry
+          ret = db[table].update(filter, entry, w: 1)
+
+          unless ret['updatedExisting'] == true && ret['error'] == nil
+            raise ret.inspect
+          end
+
+          return entry
         else
           id = create(table, entry)
           find(table, matcher).first
@@ -74,18 +66,13 @@ class Store
 
     def count table
       connect do |db|
-        resp = db.collection(table).count
-        f = Fiber.current
-        resp.callback {|count| f.resume count }
-        resp.errback {|err| raise err }
-
-        Fiber.yield
+        count = db[table].count
       end
     end
 
     def reset table
       connect do |db|
-        db.collection(table).remove()
+        db[table].remove()
       end
     end
 
@@ -113,17 +100,7 @@ class Store
       end
 
       connect do |db|
-        f = Fiber.current
-        docs = []
-        resp = db.collection(table).find(real_filters, opts).each do |doc|
-          if doc
-            docs << doc
-          else
-            f.resume if f.alive?
-          end
-        end
-        Fiber.yield
-        docs
+        db[table].find(real_filters, opts).to_a
       end
     end
 
@@ -179,17 +156,36 @@ class Store
 
     private
 
-    def connect
-      # some simple connection pooling to avoid conflicts..
+    def connect &block
+      return block.call(@@client.db(@database_name))
+      result = nil
 
-      con = if @free_connections.length > 0
-        @free_connections.pop
+      if Thread.current.mongo_connection
+        result = block.call(Thread.current.mongo_connection)
       else
-        EM::Mongo::Connection.new('localhost', 27017, nil, slave_ok: true).db(@database_name)
+        error = nil
+
+        t = Thread.new do
+          db = @@client.db(@database_name)
+          Thread.current.mongo_connection = db
+          begin
+            result = block.call(db)
+          rescue Exception => e
+            error = e
+            puts e.message
+            e.backtrace.each { |b| puts b }
+          end
+        end
+
+        while t.alive?
+          EM::Synchrony.sleep(0.001)
+        end
+
+        puts "Outside of loop!"
+
+        raise error if error
       end
 
-      result = yield(con)
-      @free_connections << con
       result
     end
 

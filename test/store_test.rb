@@ -63,7 +63,6 @@ end
 
       should "create and retrieve entry" do
         id = @it.create('test_table', { duck: 'monkey' })
-
         assert id.kind_of?(BSON::ObjectId) || id.to_i > 0
 
         result = @it.all('test_table')
@@ -132,6 +131,8 @@ end
         should 'return the resulting entry while updating' do
           id = @it.create('test_table', { duck: 'monkey', paid_taxes: true })
           entry = @it.update('test_table', id, 'duck' => 'history')
+
+          p entry
 
           assert_equal 'history', entry['duck']
           assert_equal true, entry['paid_taxes']

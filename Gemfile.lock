@@ -1,9 +1,9 @@
 PATH
   remote: .
   specs:
-    document-store (1.0.0)
-      em-mongo (= 0.4.3)
+    document-store (2.0.0)
       em-synchrony
+      mongo (= 1.9.2)
 
 GEM
   remote: http://rubygems.org/
@@ -14,9 +14,6 @@ GEM
     ansi (1.4.3)
     bson (1.9.2)
     em-minitest (1.0.1)
-    em-mongo (0.4.3)
-      bson (>= 1.1.3)
-      eventmachine (>= 0.12.10)
     em-synchrony (1.0.3)
       eventmachine (>= 1.0.0.beta.1)
     eventmachine (1.0.3)
@@ -24,6 +21,8 @@ GEM
     metaclass (0.0.1)
     mocha (0.14.0)
       metaclass (~> 0.0.1)
+    mongo (1.9.2)
+      bson (~> 1.9.2)
     multi_json (1.3.6)
     rake (10.1.0)
     shoulda (3.1.1)
