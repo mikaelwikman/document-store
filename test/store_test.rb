@@ -72,6 +72,13 @@ end
         assert_equal 1, result.first['created_at']
       end
 
+      should 'be allowed to choose id' do
+        id = @it.create('test_table', { '_id' => 'monkey' })
+
+        assert_equal 'monkey', id
+        assert_equal 'monkey', @it.all('test_table').first['_id']
+      end
+
       context '#update' do
         should 'handle many concurrent updates' do
           id = @it.create('test_table', { duck: 'monkey' })

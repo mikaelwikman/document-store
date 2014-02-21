@@ -32,10 +32,13 @@ class Store
     def create collection_name, doc
       path = collection_path(collection_name)
 
-      id = nil
-      id = SecureRandom.uuid 
-      while File.exists?(entry_path(path, id))
+      id = doc['_id']
+
+      unless id
         id = SecureRandom.uuid 
+        while File.exists?(entry_path(path, id))
+          id = SecureRandom.uuid 
+        end
       end
 
       doc['_id'] = id

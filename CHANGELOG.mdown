@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.1.1
+
+* Add requirement: allow specification of id at creation
+
 ## 2.1.0
 
 * Add first version of FileSystem DB
