@@ -2,6 +2,15 @@ require 'test_helper'
 require 'store/fs'
 
 class FsTest < TestCase
+
+  context 'select database' do
+    should 'create folder' do
+      FileUtils.rm_rf '/tmp/testdb'
+      @it = Store::FS.new('index_test_db', folder: '/tmp/testdb')
+      assert File.directory?('/tmp/testdb'), "didn't create folder"
+    end
+  end
+
   context 'fs' do
 
     setup do

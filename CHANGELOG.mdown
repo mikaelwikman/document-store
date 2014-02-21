@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.2.0
+
+* FSDB select where the database is
+
 ## 2.1.1
 
 * Add requirement: allow specification of id at creation

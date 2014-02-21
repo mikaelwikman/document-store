@@ -15,8 +15,8 @@ class Store
       @timestamper || lambda {Time.new}
     end
 
-    def initialize db_name
-      @folder = 'fsdb'
+    def initialize db_name, folder: 'fsdb'
+      @folder = folder
       @db_name = db_name
       @db_path = "#{@folder}/#{@db_name}"
 
