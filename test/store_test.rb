@@ -2,7 +2,7 @@ require 'test_helper'
 require 'store/mongodb'
 require 'store/memory'
 require 'store/cache'
-require 'em-synchrony'
+require 'store/fs'
 
 # The cache store differs in initializer from the others, so we'll
 # create a fake one to initialize it properly
@@ -18,9 +18,10 @@ end
 #end
 
 [
-  Store::Mongodb,
-  Store::Memory,
-  InMemoryCacheStore
+#  Store::Mongodb,
+#  Store::Memory,
+#  InMemoryCacheStore,
+  Store::FS
 ].each do |store|
   Class.new(TestCase).class_eval do 
 
@@ -63,7 +64,7 @@ end
 
       should "create and retrieve entry" do
         id = @it.create('test_table', { duck: 'monkey' })
-        assert id.kind_of?(BSON::ObjectId) || id.to_i > 0
+        assert id.kind_of?(BSON::ObjectId) || id.to_i > 0 || id.length > 20
 
         result = @it.all('test_table')
         assert_equal 1, result.count
@@ -102,20 +103,23 @@ end
         end
 
         should 'update entry by matcher' do
-          @it.create('test_table', { duck: 'monkey' })
-          @it.create('test_table', { duck: 'donkey' })
-          @it.create('test_table', { duck: 'congo' })
+          monkey_id = @it.create('test_table', { duck: 'monkey' })
+          donkey_id = @it.create('test_table', { duck: 'donkey' })
+          congo_id = @it.create('test_table', { duck: 'congo' })
 
           @it.update('test_table', 
                      { 'duck' => 'donkey'}, 
                      { 'duck' => 'history'})
 
-          entries = @it.all('test_table')
+          entries = {}
+          @it.each('test_table') do |doc|
+            entries[doc['_id']] = doc
+          end
 
           assert_equal 3, entries.count
-          assert_equal 'monkey', entries[0]['duck']
-          assert_equal 'history', entries[1]['duck']
-          assert_equal 'congo', entries[2]['duck']
+          assert_equal 'monkey', entries[monkey_id]['duck']
+          assert_equal 'history', entries[donkey_id]['duck']
+          assert_equal 'congo', entries[congo_id]['duck']
         end
 
         should 'update should create if not exist' do
@@ -131,8 +135,6 @@ end
         should 'return the resulting entry while updating' do
           id = @it.create('test_table', { duck: 'monkey', paid_taxes: true })
           entry = @it.update('test_table', id, 'duck' => 'history')
-
-          p entry
 
           assert_equal 'history', entry['duck']
           assert_equal true, entry['paid_taxes']
@@ -158,22 +160,22 @@ end
 
       context '#find' do
         setup do
-          @it.create('test_table', { 
+          @horse = @it.create('test_table', { 
             duck: 'horse',
             has_duck: true,
             number: 1
           })
-          @it.create('test_table', { 
+          @monkey = @it.create('test_table', { 
             duck: 'MoNkeY',
             has_duck: true,
             number: 2
           })
-          @it.create('test_table', {
+          @donkey = @it.create('test_table', {
             duck: 'donkey',
             has_duck: true,
             number: 3
           })
-          @it.create('test_table', {
+          @here = @it.create('test_table', {
             noduckie: 'here',
             has_duck: false,
             number: 4
@@ -181,14 +183,18 @@ end
         end
 
         should 'treat "unknown" as empty string as unexisting' do
-          @it.create('test_table', {
+          id = @it.create('test_table', {
             verify: true
           })
           filters = [@it.create_equal_filter(:duck, 'unknown')]
-          r = @it.find('test_table', filters)
-          assert_equal 2, r.count
-          assert_equal 'here', r[0]['noduckie']
-          assert_equal true, r[1]['verify']
+          result = @it.find('test_table', filters)
+          assert_equal 2, result.count
+
+          r = {}
+          result.each{|d| r[d['_id']] = d}
+
+          assert_equal 'here', r[@here]['noduckie']
+          assert_equal true, r[id]['verify']
         end
 
         should 'find entries case sensitive by filter' do
@@ -214,9 +220,10 @@ end
           should 'less-than' do
             filters = [@it.create_lt_filter(:number, 3)]
             result = @it.find('test_table', filters).map {|e| e}
+            r = {} ; result.each{|i| r[i['_id']] = i }
             assert_equal 2, result.count
-            assert_equal 1, result[0]['number']
-            assert_equal 2, result[1]['number']
+            assert_equal 1, r[@horse]['number']
+            assert_equal 2, r[@monkey]['number']
           end
 
           should 'greater-than' do
@@ -230,8 +237,10 @@ end
             filters = [@it.create_gte_filter(:number, 3)]
             result = @it.find('test_table', filters).map {|e| e}
             assert_equal 2, result.count
-            assert_equal 3, result[0]['number']
-            assert_equal 4, result[1]['number']
+            r = {} ; result.each{|i| r[i['_id']] = i }
+
+            assert_equal 3, r[@donkey]['number']
+            assert_equal 4, r[@here]['number']
           end
         end
 
@@ -241,10 +250,12 @@ end
         end
 
         should 'set zero-based start index' do
-          result = @it.find('test_table', [], start: 2).map{|i|i}
+          result = @it.find('test_table', [], start: 2, sort: 'number=1').map{|i|i}
           assert_equal 2, result.count
-          assert_equal 'donkey', result[0]['duck']
-          assert_equal 'here', result[1]['noduckie']
+          r = {} ; result.each{|i| r[i['_id']] = i }
+
+          assert_equal 'donkey', r[@donkey]['duck']
+          assert_equal 'here', r[@here]['noduckie']
         end
 
         should 'treat \'unknown\' as nil or empty' do
@@ -275,12 +286,12 @@ end
 
       context '#collate' do
         setup do
-          @it.create('test_table', { duck: 1990 })
-          @it.create('test_table', { duck: nil })
-          @it.create('test_table', { duck: "" })
-          @it.create('test_table', { duck: 'monkey' })
-          @it.create('test_table', { duck: 'donkey' })
-          @it.create('test_table', { duck: 'donkey' })
+          @_1990   = @it.create('test_table', { n: 1, duck: 1990 })
+          @nil     = @it.create('test_table', { n: 2, duck: nil })
+          @empty   = @it.create('test_table', { n: 3, duck: "" })
+          @monkey1 = @it.create('test_table', { n: 4, duck: 'monkey' })
+          @monkey2 = @it.create('test_table', { n: 5, duck: 'donkey' })
+          @monkey3 = @it.create('test_table', { n: 6, duck: 'donkey' })
         end
 
         should 'find entries by filter' do
@@ -296,7 +307,7 @@ end
         end
 
         should 'set zero-based start index' do
-          result = @it.collate('test_table', [], start: 3, limit: 2)
+          result = @it.collate('test_table', [], start: 3, limit: 2, sort: 'n=1')
           assert_equal 2, result[:items].count
           assert_equal 'monkey', result[:items][0]['duck']
           assert_equal 'donkey', result[:items][1]['duck']
@@ -325,20 +336,25 @@ end
           entries = result[:facets]['duck']
           assert entries, "Expected facets to include 'duck'"
           assert_equal 5, entries.count
-          assert_equal [
-            ['donkey'  , 3],
-            ['unknown' , 2],
-            ['monkey'  , 1],
-            ['1990'    , 1],
-            ['muppet'  , 1],
-          ], entries
+
+          r = {} ; entries.each { |k,v| r[k] = v }
+
+          assert_equal 3, r['donkey']
+          assert_equal 2, r['unknown']
+          assert_equal 1, r['monkey']
+          assert_equal 1, r['1990']
+          assert_equal 1, r['muppet']
         end
 
         should 'limit facet entries count, cutting lesser important' do
           result = @it.collate('test_table', [], facets: [:duck], facetlimit: 2)
           entries = result[:facets]['duck']
           assert_equal 2, entries.count
-          assert_equal(['donkey', 2], entries[0])
+
+          r = {} ; entries.each { |k,v| r[k] = v }
+
+          assert_equal 2, r['donkey']
+          assert_equal 2, r['unknown']
         end
       end
 

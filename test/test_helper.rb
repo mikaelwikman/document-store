@@ -1,4 +1,5 @@
 require 'bundler/setup'
+require 'em-synchrony'
 require 'test/unit'
 require 'em-minitest'
 require 'turn/autorun'
