@@ -62,6 +62,7 @@ class Store
 
     def get_branch_name val
       branch_name = val.to_s
+      branch_name.gsub! '/', '_'
       branch_name = '__empty__' if branch_name.empty?
       branch_name
     end

@@ -57,6 +57,12 @@ class FsTest < TestCase
           assert_equal 'pelle', data['name']
         end
 
+        should 'allow and transcode slash' do
+          id = @it.create('collection', { 'name' => 'mika/the/cool' })
+          file = "fsdb/index_test_db/collection/index/name/mika_the_cool/#{id}"
+          assert File.symlink?(file)
+        end
+
         context 'adding a second index' do
 
           setup do

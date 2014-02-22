@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.2.1
+
+* FSDB could not create indices on data containing forward-slash.
+
 ## 2.2.0
 
 * FSDB select where the database is
