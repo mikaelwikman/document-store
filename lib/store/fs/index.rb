@@ -5,7 +5,8 @@ class Store
       path = collection_path(collection_name)
       path_index = index_path(path)
 
-      FileUtils.mkdir "#{path_index}/#{index_name}"
+      branch_path = "#{path_index}/#{index_name}"
+      FileUtils.mkdir branch_path unless File.directory?(branch_path)
 
       each(collection_name) do |doc|
         add_to_index path, doc

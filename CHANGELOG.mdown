@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.2.2
+
+* Do not error on adding an index that already exists (cause it may have been interrupted, and running the command again might fix the issue)
+
 ## 2.2.1
 
 * FSDB could not create indices on data containing forward-slash.

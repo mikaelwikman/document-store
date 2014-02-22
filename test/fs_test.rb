@@ -63,6 +63,10 @@ class FsTest < TestCase
           assert File.symlink?(file)
         end
 
+        should 'not error on adding same index again' do
+          @it.create_index('collection', 'name')
+        end
+
         context 'adding a second index' do
 
           setup do
