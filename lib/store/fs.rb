@@ -53,6 +53,22 @@ class Store
       id
     end
 
+    def get_by_id path, id
+      doc_path = entry_path(path, id)
+
+      if File.exists?(doc_path)
+        JSON.parse(File.read(doc_path))
+      end
+    end
+
+    def save path, doc
+      doc_path = entry_path(path, doc['_id'])
+
+      serialized = JSON.pretty_generate(doc)
+
+      File.write(doc_path, serialized)
+    end
+
     def update collection_name, id_or_hash, changes
       path = collection_path(collection_name)
 
@@ -60,16 +76,7 @@ class Store
       
       # use id to find doc
       if !id_is_hash || id_or_hash.length == 1 && id_or_hash.key?(:_id)
-        id = id_or_hash
-
-        doc_path = entry_path(path, id)
-        old_doc = nil
-
-        if File.exists?(doc_path)
-          old_doc = JSON.parse(File.read(doc_path))
-        else
-          old_doc = {}
-        end
+        old_doc = get_by_id(path, id_or_hash) || {}
 
         new_doc = old_doc.merge(changes)
         new_doc['updated_at'] = timestamper.call
@@ -139,11 +146,69 @@ class Store
     end
 
     def find collection_name, filters, opts={}
+      path_collection = collection_path(collection_name)
+      path_index = index_path(path_collection)
       found = []
 
-      each(collection_name) do |doc|
-        if filters.all?{|f| f.match?(doc)}
-          found << doc
+      id_filter = filters.find{|f| f.kind_of?(EqualFilter) && f.field.to_s == '_id'}
+
+      if id_filter # an optimization, using special key _id
+      doc = get_by_id(path_collection, id)
+        if doc
+          if filters.all?{|f| f.match(doc)}
+            found << doc
+          end
+        end
+      else
+        indices = get_indices(path_index)
+
+        equal_indices = [];
+        indices.each do |i| 
+          i = 0
+          while i < filters.count-1
+            f = filters[i]
+            if f.kind_of?(EqualFilter) && f.field == i
+              equal_indices << [f.field, f.value]
+              filters.delete_at(i)
+              i-=1
+            end
+            i+=1
+          end
+        end
+
+        if equal_indices.length > 0
+          # there is at least one index we can use, so let's speed things up
+
+          sub_matches = []
+          equal_indices.each do |name, value|
+            sub_matches << get_branch_leaves(path_index, name, value)
+          end
+
+          set = sub_matches[0]
+          if sub_matches.count > 1
+            sub_matches[1..-1].each do |m|
+              set &= m
+            end
+          end
+
+          p set
+
+          # read the result
+          set.each do |m|
+            found << get_by_id(path_collection, m)
+          end
+
+          # so now we have a set that matches all indices we could use,
+          # but we might still have some filters we need to apply
+
+
+        else
+          # no usable index - got to parse them all
+          each(collection_name) do |doc|
+            if filters.all?{|f| f.match?(doc)}
+              found << doc
+            end
+          end
         end
       end
 

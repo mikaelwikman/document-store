@@ -67,6 +67,13 @@ class FsTest < TestCase
           @it.create_index('collection', 'name')
         end
 
+        should 'use index in #find' do
+          filter = @it.create_equal_filter :name, 'mikael'
+          File.expects(:open).with("fsdb/index_test_db/collection/index/name/mikael/#{@id}").returns(@data)
+          result = @it.find('collection', [filter])
+          assert_equal 1, result.count
+        end
+
         context 'adding a second index' do
 
           setup do

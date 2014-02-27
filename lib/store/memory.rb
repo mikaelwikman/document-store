@@ -213,8 +213,13 @@ class Store
       def filter entries
         entries.find_all do |entry|
           value2 = entry[@field]
-          value2 = '' if value2 == nil
-          value2 == @value
+
+          if value2.kind_of?(Array)
+            value2.any?{|v| v='' if v == nil; v == @value}
+          else
+            value2 = '' if value2 == nil
+            value2 == @value
+          end
         end
       end
     end

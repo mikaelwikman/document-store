@@ -18,9 +18,9 @@ end
 #end
 
 [
-#  Store::Mongodb,
-#  Store::Memory,
-#  InMemoryCacheStore,
+  Store::Mongodb,
+  Store::Memory,
+  InMemoryCacheStore,
   Store::FS
 ].each do |store|
   Class.new(TestCase).class_eval do 
@@ -170,6 +170,7 @@ end
           @horse = @it.create('test_table', { 
             duck: 'horse',
             has_duck: true,
+            array_test: [1, 2, 3],
             number: 1
           })
           @monkey = @it.create('test_table', { 
@@ -202,6 +203,12 @@ end
 
           assert_equal 'here', r[@here]['noduckie']
           assert_equal true, r[id]['verify']
+        end
+
+        should 'treat several values as OR' do
+          filters = [@it.create_equal_filter('array_test', 1)]
+          result = @it.find('test_table', filters)
+          assert_equal 1, result.count
         end
 
         should 'find entries case sensitive by filter' do

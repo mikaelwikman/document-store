@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    document-store (2.2.1)
+    document-store (2.2.2)
       em-synchrony
       mongo (= 1.9.2)
 

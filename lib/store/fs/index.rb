@@ -56,9 +56,14 @@ class Store
       end
     end
 
+
     private 
     def get_indices path
       Dir.glob("#{path}/*/").map{|d| d.chop!; d[(d.rindex('/')+1)..-1]}
+    end
+
+    def get_branch_leaves path, name, value
+      Dir["#{path}/#{name}/#{get_branch_name(value)}/*"]
     end
 
     def get_branch_name val
