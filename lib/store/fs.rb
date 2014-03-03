@@ -161,9 +161,9 @@ class Store
       id_filter = filters.find{|f| f.kind_of?(EqualFilter) && f.field.to_s == '_id'}
 
       if id_filter # an optimization, using special key _id
-      doc = get_by_id(path_collection, id)
+        doc = get_by_id(path_collection, id_filter.value)
         if doc
-          if filters.all?{|f| f.match(doc)}
+          if filters.all?{|f| f.match?(doc)}
             found << doc
           end
         end

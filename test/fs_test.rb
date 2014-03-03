@@ -80,6 +80,18 @@ class FsTest < TestCase
           assert_equal ["fsdb/index_test_db/collection/data/#{@id}"], @it.files_accessed
         end
 
+        should 'use id as index' do
+          @it.log_file_access = true
+          untouched_id = @it.create('collection', { name: 'doesnt matter' })
+          filter = @it.create_equal_filter '_id', @id
+          
+          result = @it.find('collection', [filter])
+          assert_equal 1, result.count
+          assert_equal 'mikael', result[0]['name']
+
+          assert_equal ["fsdb/index_test_db/collection/data/#{@id}"], @it.files_accessed
+        end
+
         should 'filter as usually without index' do
           @it.log_file_access
 
