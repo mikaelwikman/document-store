@@ -43,8 +43,11 @@ class Store
       get_indices(path).each do |index|
         if old_doc[index] != new_doc[index]
           old_branch_name = get_branch_name(old_doc[index])
-          File.delete "#{path}/#{index}/#{old_branch_name}/#{old_doc['_id']}"
 
+          old_leaf = "#{path}/#{index}/#{old_branch_name}/#{old_doc['_id']}"
+          if File.exists?(old_leaf)
+            File.delete old_leaf
+          end
 
           new_branch_name = get_branch_name(new_doc[index])
           new_branch_path = "#{path}/#{index}/#{new_branch_name}"
