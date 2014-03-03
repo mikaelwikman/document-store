@@ -63,7 +63,8 @@ class Store
     end
 
     def get_branch_leaves path, name, value
-      Dir["#{path}/#{name}/#{get_branch_name(value)}/*"]
+      r = Dir["#{path}/#{name}/#{get_branch_name(value)}/*"]
+      r.map{|d| d[(d.rindex('/')+1)..-1]}
     end
 
     def get_branch_name val

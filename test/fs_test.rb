@@ -68,10 +68,29 @@ class FsTest < TestCase
         end
 
         should 'use index in #find' do
-          filter = @it.create_equal_filter :name, 'mikael'
-          File.expects(:open).with("fsdb/index_test_db/collection/index/name/mikael/#{@id}").returns(@data)
+          @it.log_file_access = true
+          untouched_id = @it.create('collection', { name: 'doesnt matter' })
+
+          filter = @it.create_equal_filter 'name', 'mikael'
+          
           result = @it.find('collection', [filter])
           assert_equal 1, result.count
+          assert_equal 'mikael', result[0]['name']
+
+          assert_equal ["fsdb/index_test_db/collection/data/#{@id}"], @it.files_accessed
+        end
+
+        should 'filter as usually without index' do
+          @it.log_file_access
+
+          untouched_id = @it.create('collection', { name: 'doesnt matter' })
+          partial_match_id = @it.create('collection', { name: 'mikael', duck: 'for sure' })
+
+          filter1 = @it.create_equal_filter 'name', 'mikael'
+          filter2 = @it.create_equal_filter 'duck', 'for sure'
+          result = @it.find('collection', [filter1, filter2])
+          assert_equal 1, result.count
+          assert_equal 'for sure', result[0]['duck']
         end
 
         context 'adding a second index' do
@@ -83,6 +102,23 @@ class FsTest < TestCase
           should 'index existing documents' do
             file = "fsdb/index_test_db/collection/index/data/stuff/#{@id}"
             assert File.symlink?(file), 'expected existing document to be indexed'
+          end
+
+          should 'use both indexes in find' do
+            @it.log_file_access
+
+            untouched_id = @it.create('collection', { name: 'doesnt matter', data: 'doesnt matter' })
+
+            filter1 = @it.create_equal_filter 'name', 'mikael'
+            filter2 = @it.create_equal_filter 'data', 'stuff'
+
+            result = @it.find('collection', [filter1,filter2])
+            assert_equal 1, result.count
+            assert_equal 'mikael', result[0]['name']
+            assert_equal 'stuff', result[0]['data']
+
+            # no reason to touch this record if we're using indexes
+            assert !@it.files_accessed.any?{|f| f == "fsdb/index_test_db/collection/data/#{untouched_id}" }
           end
 
           should 'use __empty__ for empty strings and nil' do

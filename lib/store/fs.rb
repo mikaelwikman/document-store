@@ -10,6 +10,8 @@ class Store
   class FS
 
     attr_writer :timestamper
+    attr_accessor :log_file_access
+    attr_reader :files_accessed
 
     def timestamper
       @timestamper || lambda {Time.new}
@@ -19,6 +21,7 @@ class Store
       @folder = folder
       @db_name = db_name
       @db_path = "#{@folder}/#{@db_name}"
+      @files_accessed = []
 
       Dir.mkdir(@folder) unless File.directory?(@folder)
       Dir.mkdir(@db_path) unless File.directory?(@db_path)
@@ -32,6 +35,14 @@ class Store
     def create collection_name, doc
       path = collection_path(collection_name)
 
+      doc.keys.each do |key|
+        if key.kind_of?(Symbol)
+          val = doc[key]
+          doc.delete(key)
+          doc[key.to_s] = val
+        end
+      end
+
       id = doc['_id']
 
       unless id
@@ -44,10 +55,7 @@ class Store
       doc['_id'] = id
       doc['created_at'] = doc['updated_at'] = timestamper.call
 
-      serialized = JSON.pretty_generate(doc)
-
-      File.write(entry_path(path, id), serialized)
-
+      save(path, doc)
       add_to_index(path, doc)
 
       id
@@ -57,6 +65,7 @@ class Store
       doc_path = entry_path(path, id)
 
       if File.exists?(doc_path)
+        @files_accessed << doc_path if @log_file_access
         JSON.parse(File.read(doc_path))
       end
     end
@@ -81,8 +90,7 @@ class Store
         new_doc = old_doc.merge(changes)
         new_doc['updated_at'] = timestamper.call
 
-        File.write(doc_path, JSON.pretty_generate(new_doc))
-
+        save(path, new_doc)
         update_index path, old_doc, new_doc
 
         return new_doc
@@ -163,16 +171,16 @@ class Store
         indices = get_indices(path_index)
 
         equal_indices = [];
-        indices.each do |i| 
-          i = 0
-          while i < filters.count-1
-            f = filters[i]
-            if f.kind_of?(EqualFilter) && f.field == i
+        indices.each do |index_name| 
+          fi = 0
+          while fi < filters.count
+            f = filters[fi]
+            if f.kind_of?(EqualFilter) && f.field == index_name
               equal_indices << [f.field, f.value]
-              filters.delete_at(i)
-              i-=1
+              filters.delete_at(fi)
+              fi-=1
             end
-            i+=1
+            fi+=1
           end
         end
 
@@ -191,8 +199,6 @@ class Store
             end
           end
 
-          p set
-
           # read the result
           set.each do |m|
             found << get_by_id(path_collection, m)
@@ -200,8 +206,8 @@ class Store
 
           # so now we have a set that matches all indices we could use,
           # but we might still have some filters we need to apply
-
-
+         
+          found.keep_if{|doc| filters.all?{|f| f.match?(doc)}}
         else
           # no usable index - got to parse them all
           each(collection_name) do |doc|

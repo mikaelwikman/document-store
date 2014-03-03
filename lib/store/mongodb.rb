@@ -64,6 +64,10 @@ class Store
       find(table,{})
     end
 
+    def each table, &block
+      all(table).each &block
+    end
+
     def count table
       connect do |db|
         count = db[table].count

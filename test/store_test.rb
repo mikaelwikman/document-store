@@ -119,8 +119,8 @@ end
                      { 'duck' => 'history'})
 
           entries = {}
-          @it.each('test_table') do |doc|
-            entries[doc['_id']] = doc
+          @it.all('test_table').each do |d|
+            entries[d['_id']] = d
           end
 
           assert_equal 3, entries.count
