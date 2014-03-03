@@ -54,7 +54,12 @@ class Store
           unless File.exists?(new_branch_path)
             FileUtils.mkdir(new_branch_path)
           end
-          File.symlink "../../../data/#{new_doc['_id']}", "#{new_branch_path}/#{new_doc['_id']}"
+
+          target = "../../../data/#{new_doc['_id']}"
+          symlink_path = "#{new_branch_path}/#{new_doc['_id']}"
+          unless File.exists?(symlink_path)
+            File.symlink target, symlink_path
+          end
         end
       end
     end
