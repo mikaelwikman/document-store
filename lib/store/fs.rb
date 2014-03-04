@@ -74,7 +74,6 @@ class Store
       doc_path = entry_path(path, doc['_id'])
 
       serialized = JSON.pretty_generate(doc)
-
       File.write(doc_path, serialized)
     end
 
@@ -113,9 +112,7 @@ class Store
             new_doc = old_doc.merge(changes)
             new_doc['updated_at'] = timestamper.call
 
-            doc_path = entry_path(path, new_doc['_id'])
-            File.write(doc_path, JSON.pretty_generate(new_doc))
-
+            save(path, new_doc)
             update_index path, old_doc, new_doc
 
             return new_doc
