@@ -143,6 +143,36 @@ class FsTest < TestCase
             assert File.symlink?(name_index_file), 'index file not found'
           end
 
+          context 'multiple values' do
+            setup do
+              @id2 = @it.create('collection', { data: ['one', 'two'] })
+            end
+
+            should 'add symlink for each value' do
+              file = "fsdb/index_test_db/collection/index/data/one/#{@id2}"
+              assert File.symlink?(file), 'expected existing document to be indexed'
+
+              file = "fsdb/index_test_db/collection/index/data/two/#{@id2}"
+              assert File.symlink?(file), 'expected existing document to be indexed'
+            end
+
+            should 'update when one change' do 
+              @it.update('collection', @id2, { data: ['one', 'three', 'four'] })
+
+              file = "fsdb/index_test_db/collection/index/data/one/#{@id2}"
+              assert File.symlink?(file), 'expected existing document to be indexed'
+
+              file = "fsdb/index_test_db/collection/index/data/two/#{@id2}"
+              assert !File.symlink?(file), 'expected old symlink to be removed'
+
+              file = "fsdb/index_test_db/collection/index/data/three/#{@id2}"
+              assert File.symlink?(file), 'expected existing document to be indexed'
+
+              file = "fsdb/index_test_db/collection/index/data/four/#{@id2}"
+              assert File.symlink?(file), 'expected existing document to be indexed'
+
+            end
+          end
         end
 
       end

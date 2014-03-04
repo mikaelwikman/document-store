@@ -21,19 +21,24 @@ class Store
       # the task is to add this document to each index available
 
       get_indices(path).each do |index|
-        branch_name = get_branch_name(doc[index])
+        values = doc[index]
 
-        branch_path = "#{path}/#{index}/#{branch_name}"
-        unless File.exists?(branch_path)
-          FileUtils.mkdir(branch_path)
+        values = [values] unless values.kind_of?(Array)
+
+        values.each do |value|
+          branch_name = get_branch_name(value)
+
+          branch_path = "#{path}/#{index}/#{branch_name}"
+          unless File.exists?(branch_path)
+            FileUtils.mkdir(branch_path)
+          end
+
+          symlink_path = "#{branch_path}/#{doc['_id']}"
+          unless File.symlink?(symlink_path)
+            file_path = "../../../data/#{doc['_id']}"
+            File.symlink file_path, symlink_path
+          end
         end
-
-        symlink_path = "#{branch_path}/#{doc['_id']}"
-        unless File.symlink?(symlink_path)
-          file_path = "../../../data/#{doc['_id']}"
-          File.symlink file_path, symlink_path
-        end
-
       end
     end
 
@@ -41,24 +46,34 @@ class Store
       path = index_path(path)
 
       get_indices(path).each do |index|
-        if old_doc[index] != new_doc[index]
-          old_branch_name = get_branch_name(old_doc[index])
+        old_values = old_doc[index]
+        new_values = new_doc[index]
+        unless old_values == new_values
+          old_values = [old_values] unless old_values.kind_of?(Array)
+          new_values = [new_values] unless new_values.kind_of?(Array)
 
-          old_leaf = "#{path}/#{index}/#{old_branch_name}/#{old_doc['_id']}"
-          if File.exists?(old_leaf)
-            File.delete old_leaf
+          # for each one we no longer have, remove its link
+          (old_values-new_values).each do |value|
+            old_branch_name = get_branch_name(value)
+
+            old_leaf = "#{path}/#{index}/#{old_branch_name}/#{old_doc['_id']}"
+            if File.exists?(old_leaf)
+              File.delete old_leaf
+            end
           end
 
-          new_branch_name = get_branch_name(new_doc[index])
-          new_branch_path = "#{path}/#{index}/#{new_branch_name}"
-          unless File.exists?(new_branch_path)
-            FileUtils.mkdir(new_branch_path)
-          end
+          (new_values-old_values).each do |value|
+            new_branch_name = get_branch_name(value)
+            new_branch_path = "#{path}/#{index}/#{new_branch_name}"
+            unless File.exists?(new_branch_path)
+              FileUtils.mkdir(new_branch_path)
+            end
 
-          target = "../../../data/#{new_doc['_id']}"
-          symlink_path = "#{new_branch_path}/#{new_doc['_id']}"
-          unless File.exists?(symlink_path)
-            File.symlink target, symlink_path
+            target = "../../../data/#{new_doc['_id']}"
+            symlink_path = "#{new_branch_path}/#{new_doc['_id']}"
+            unless File.exists?(symlink_path)
+              File.symlink target, symlink_path
+            end
           end
         end
       end

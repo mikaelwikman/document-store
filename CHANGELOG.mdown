@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.2.8
+
+* Fix a bug where indexes would not treat arrays correctly
+
 ## 2.2.5
 
 * Fix a bug where updating the index of an item that wasn't saved properly resulted in and error

@@ -80,6 +80,14 @@ class Store
     def update collection_name, id_or_hash, changes
       path = collection_path(collection_name)
 
+      changes.keys.each do |key|
+        if key.kind_of?(Symbol)
+          val = changes[key]
+          changes.delete(key)
+          changes[key.to_s] = val
+        end
+      end
+
       id_is_hash = id_or_hash.kind_of?(Hash)
       
       # use id to find doc
