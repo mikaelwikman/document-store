@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.3.0
+
+* Add ability to FSDB to make count requests with filters, using indexes optimally
+
 ## 2.2.9
 
 * Fixed an issue where an indexing method would modify string parameter, changing its value

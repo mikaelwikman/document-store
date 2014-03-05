@@ -80,6 +80,16 @@ class FsTest < TestCase
           assert_equal ["fsdb/index_test_db/collection/data/#{@id}"], @it.files_accessed
         end
 
+        should 'use index in #count' do
+          @it.log_file_access = true
+          untouched_id = @it.create('collection', { name: 'doesnt matter' })
+
+          filter = @it.create_equal_filter 'name', 'mikael'
+          assert_equal 1, @it.count('collection', [filter])
+
+          assert_equal [], @it.files_accessed
+        end
+
         should 'use id as index' do
           @it.log_file_access = true
           untouched_id = @it.create('collection', { name: 'doesnt matter' })
@@ -92,17 +102,31 @@ class FsTest < TestCase
           assert_equal ["fsdb/index_test_db/collection/data/#{@id}"], @it.files_accessed
         end
 
-        should 'filter as usually without index' do
-          @it.log_file_access
+        context 'mixed index and non-index' do
 
-          untouched_id = @it.create('collection', { name: 'doesnt matter' })
-          partial_match_id = @it.create('collection', { name: 'mikael', duck: 'for sure' })
+          setup do
+            @it.log_file_access
 
-          filter1 = @it.create_equal_filter 'name', 'mikael'
-          filter2 = @it.create_equal_filter 'duck', 'for sure'
-          result = @it.find('collection', [filter1, filter2])
-          assert_equal 1, result.count
-          assert_equal 'for sure', result[0]['duck']
+            @untouched_id = @it.create('collection', { name: 'doesnt matter' })
+            @partial_match_id = @it.create('collection', { name: 'mikael', duck: 'for sure' })
+          end
+
+          should 'filter as expected' do
+            filter1 = @it.create_equal_filter 'name', 'mikael'
+            filter2 = @it.create_equal_filter 'duck', 'for sure'
+            result = @it.find('collection', [filter1, filter2])
+            assert_equal 1, result.count
+            assert_equal 'for sure', result[0]['duck']
+          end
+
+          should 'count using index when possible' do
+            @it.log_file_access = true
+            filter1 = @it.create_equal_filter 'name', 'mikael'
+            filter2 = @it.create_equal_filter 'duck', 'for sure'
+            c = @it.count('collection', [filter1, filter2])
+            assert_equal 1, c
+            assert !@it.files_accessed.any?{|f| f == "fsdb/index_test_db/collection/data/#{@untouched_id}"}
+          end
         end
 
         context 'adding a second index' do

@@ -134,11 +134,18 @@ class Store
       end
     end
 
-    def count collection_name
-      path = collection_path(collection_name)
+    def count collection_name, filters=[]
+      path_collection = collection_path(collection_name)
 
-      line_count = `ls -f '#{data_path(path)}' | wc -l`
-      line_count.to_i - 2 # exclude . and ..
+      if filters.empty?
+        line_count = `ls -f '#{data_path(path_collection)}' | wc -l`
+        line_count.to_i - 2 # exclude . and ..
+      else
+        # got to use #find_files
+        path_index = index_path(path_collection)
+        result = find_files(path_collection, path_index, filters)
+        result.count
+      end
     end
 
     def all collection_name
@@ -161,65 +168,13 @@ class Store
     def find collection_name, filters, opts={}
       path_collection = collection_path(collection_name)
       path_index = index_path(path_collection)
-      found = []
 
-      id_filter = filters.find{|f| f.kind_of?(EqualFilter) && f.field.to_s == '_id'}
-
-      if id_filter # an optimization, using special key _id
-        doc = get_by_id(path_collection, id_filter.value)
-        if doc
-          if filters.all?{|f| f.match?(doc)}
-            found << doc
-          end
-        end
-      else
-        indices = get_indices(path_index)
-
-        equal_indices = [];
-        indices.each do |index_name| 
-          fi = 0
-          while fi < filters.count
-            f = filters[fi]
-            if f.kind_of?(EqualFilter) && f.field == index_name
-              equal_indices << [f.field, f.value]
-              filters.delete_at(fi)
-              fi-=1
-            end
-            fi+=1
-          end
-        end
-
-        if equal_indices.length > 0
-          # there is at least one index we can use, so let's speed things up
-
-          sub_matches = []
-          equal_indices.each do |name, value|
-            sub_matches << get_branch_leaves(path_index, name, value)
-          end
-
-          set = sub_matches[0]
-          if sub_matches.count > 1
-            sub_matches[1..-1].each do |m|
-              set &= m
-            end
-          end
-
-          # read the result
-          set.each do |m|
-            found << get_by_id(path_collection, m)
-          end
-
-          # so now we have a set that matches all indices we could use,
-          # but we might still have some filters we need to apply
-         
-          found.keep_if{|doc| filters.all?{|f| f.match?(doc)}}
+      files_or_docs = find_files(path_collection, path_index, filters)
+      found = files_or_docs.map do |m|
+        if m.kind_of?(String)
+          get_by_id(path_collection, m)
         else
-          # no usable index - got to parse them all
-          each(collection_name) do |doc|
-            if filters.all?{|f| f.match?(doc)}
-              found << doc
-            end
-          end
+          m
         end
       end
 
@@ -315,6 +270,73 @@ class Store
     end
 
     private
+
+    # returns either a set of ids, or a set of ready-parsed documents
+    # if necessary
+    def find_files path_collection, path_index, filters
+      found = []
+      id_filter = filters.find{|f| f.kind_of?(EqualFilter) && f.field.to_s == '_id'}
+
+      if id_filter # an optimization, using special key _id, has to be unique
+        doc = get_by_id(path_collection, id_filter.value)
+        if doc
+          if filters.all?{|f| f.match?(doc)}
+            found << doc
+          end
+        end
+      else
+        indices = get_indices(path_index)
+
+        equal_indices = [];
+        indices.each do |index_name| 
+          fi = 0
+          while fi < filters.count
+            f = filters[fi]
+            if f.kind_of?(EqualFilter) && f.field == index_name
+              equal_indices << [f.field, f.value]
+              filters.delete_at(fi)
+              fi-=1
+            end
+            fi+=1
+          end
+        end
+
+        if equal_indices.length > 0
+          # there is at least one index we can use, so let's speed things up
+
+          sub_matches = []
+          equal_indices.each do |name, value|
+            sub_matches << get_branch_leaves(path_index, name, value)
+          end
+
+          set = sub_matches[0]
+          if sub_matches.count > 1
+            sub_matches[1..-1].each do |m|
+              set &= m
+            end
+          end
+
+          if filters.empty?
+            # nothing more to check, no need to read from disk
+            found = set
+          else
+            # there are fields we need to check that doesn't have indexes,
+            # read it
+            set.each do |m|
+              doc = get_by_id(path_collection, m)
+              found << doc if filters.all?{|f| f.match?(doc)}
+            end
+          end
+        else
+          # no usable index - got to parse them all
+          each(collection_name) do |doc|
+            found << doc if filters.all?{|f| f.match?(doc)}
+          end
+        end
+      end
+
+      found
+    end
 
     def calculate_facets facets, records
       result = {}
