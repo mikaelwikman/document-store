@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.2.9
+
+* Fixed an issue where an indexing method would modify string parameter, changing its value
+
 ## 2.2.8
 
 * Fix a bug where indexes would not treat arrays correctly

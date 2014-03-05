@@ -91,7 +91,7 @@ class Store
     end
 
     def get_branch_name val
-      branch_name = val.to_s
+      branch_name = "#{val}" # don't use to_s, as this will return same object if string
       branch_name.gsub! '/', '_'
       branch_name = '__empty__' if branch_name.empty?
       branch_name
