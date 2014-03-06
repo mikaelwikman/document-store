@@ -256,6 +256,12 @@ end
             assert_equal 3, r[@donkey]['number']
             assert_equal 4, r[@here]['number']
           end
+
+          should 'not fail with comparisons when different classes' do
+            result = @it.find('test_table', [@it.create_gt_filter(:number, '3')]).map {|e| e}
+            result = @it.find('test_table', [@it.create_lt_filter(:number, '3')]).map {|e| e}
+            result = @it.find('test_table', [@it.create_gte_filter(:number, '3')]).map {|e| e}
+          end
         end
 
         should 'limit response size' do

@@ -235,7 +235,7 @@ class Store
         entries.find_all do |entry|
           value2 = entry[@field]
           value2 = '' if value2 == nil
-          value2 < @value
+          value2 < @value if value2.kind_of?(@value.class)
         end
       end
     end
@@ -251,7 +251,7 @@ class Store
         entries.find_all do |entry|
           value2 = entry[@field]
           value2 = '' if value2 == nil
-          value2 > @value
+          value2 > @value if value2.kind_of?(@value.class)
         end
       end
     end
@@ -266,7 +266,7 @@ class Store
         entries.find_all do |entry|
           value2 = entry[@field]
           value2 = '' if value2 == nil
-          value2 >= @value
+          value2 >= @value if value2.kind_of?(@value.class)
         end
       end
     end

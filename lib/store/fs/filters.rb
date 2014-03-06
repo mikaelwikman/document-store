@@ -27,7 +27,7 @@ class Store
       def match?(doc)
         value2 = doc[@field]
         value2 = '' if value2 == nil
-        value2 < @value
+        value2 < @value if value2.kind_of?(@value.class)
       end
     end
 
@@ -35,7 +35,7 @@ class Store
       def match?(doc)
         value2 = doc[@field]
         value2 = '' if value2 == nil
-        value2 > @value
+        value2 > @value if value2.kind_of?(@value.class)
       end
     end
 
@@ -43,7 +43,7 @@ class Store
       def match?(doc)
         value2 = doc[@field]
         value2 = '' if value2 == nil
-        value2 >= @value
+        value2 >= @value if value2.kind_of?(@value.class)
       end
     end
   end

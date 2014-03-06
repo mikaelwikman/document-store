@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.3.2
+
+* Fixed an issue where FSDB and MemoryDB would crash if comparing (lt,gt,gte) a values of different classes
+
 ## 2.3.1
 
 * fix bug in which using filters without index would crash
