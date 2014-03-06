@@ -143,7 +143,7 @@ class Store
       else
         # got to use #find_files
         path_index = index_path(path_collection)
-        result = find_files(path_collection, path_index, filters)
+        result = find_files(collection_name, filters)
         result.count
       end
     end
@@ -169,7 +169,7 @@ class Store
       path_collection = collection_path(collection_name)
       path_index = index_path(path_collection)
 
-      files_or_docs = find_files(path_collection, path_index, filters)
+      files_or_docs = find_files(collection_name, filters)
       found = files_or_docs.map do |m|
         if m.kind_of?(String)
           get_by_id(path_collection, m)
@@ -273,7 +273,10 @@ class Store
 
     # returns either a set of ids, or a set of ready-parsed documents
     # if necessary
-    def find_files path_collection, path_index, filters
+    def find_files collection_name, filters
+      path_collection = collection_path(collection_name)
+      path_index = index_path(path_collection)
+
       found = []
       id_filter = filters.find{|f| f.kind_of?(EqualFilter) && f.field.to_s == '_id'}
 

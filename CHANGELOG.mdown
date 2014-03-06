@@ -1,6 +1,10 @@
 
 # ChangeLog
 
+## 2.3.1
+
+* fix bug in which using filters without index would crash
+
 ## 2.3.0
 
 * Add ability to FSDB to make count requests with filters, using indexes optimally
